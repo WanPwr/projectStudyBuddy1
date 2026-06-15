@@ -1,4 +1,4 @@
-package com.studybuddy.data;
+package com.example.projectstudybuddy1.data;
 
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
