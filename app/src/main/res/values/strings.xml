@@ -1,3 +1,9 @@
 <resources>
-    <string name="app_name">projectStudyBuddy1</string>
+    <string name="app_name">ProjectStudyBuddy1</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_timer">Timer</string>
+    <string name="menu_tasks">Tasks</string>
+    <string name="menu_journal">Journal</string>
+    <string name="menu_cards">Cards</string>
 </resources>
