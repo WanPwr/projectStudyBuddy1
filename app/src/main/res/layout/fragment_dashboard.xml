@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/bg_cream">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="20dp">
+
+        <ImageView
+            android:id="@+id/ivAvatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_myplaces"
+            android:contentDescription="User Avatar"
+            app:tint="@color/accent_brown"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="WELCOME BACK, user"
+            android:textColor="@color/text_dark"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginStart="12dp"
+            app:layout_constraintTop_toTopOf="@id/ivAvatar"
+            app:layout_constraintBottom_toBottomOf="@id/ivAvatar"
+            app:layout_constraintStart_toEndOf="@id/ivAvatar"/>
+
+        <LinearLayout
+            android:id="@+id/streakContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:background="@drawable/bg_rounded_card"
+            android:padding="12dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/ivAvatar">
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:text="1" android:gravity="center" android:background="@drawable/bg_streak_active" android:textColor="@android:color/white" android:layout_margin="2dp"/>
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:text="2" android:gravity="center" android:background="@drawable/bg_streak_active" android:textColor="@android:color/white" android:layout_margin="2dp"/>
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:text="3" android:gravity="center" android:background="@drawable/bg_streak_active" android:textColor="@android:color/white" android:layout_margin="2dp"/>
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:text="4" android:gravity="center" android:background="@drawable/bg_streak_active" android:textColor="@android:color/white" android:layout_margin="2dp"/>
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:text="5" android:gravity="center" android:background="@drawable/bg_streak_inactive" android:textColor="@color/accent_brown" android:layout_margin="2dp"/>
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:text="6" android:gravity="center" android:background="@drawable/bg_streak_inactive" android:textColor="@color/accent_brown" android:layout_margin="2dp"/>
+            <TextView android:layout_width="32dp" android:layout_height="32dp" android:text="7" android:gravity="center" android:background="@drawable/bg_streak_inactive" android:textColor="@color/accent_brown" android:layout_margin="2dp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvReminderLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reminder :\nTO-DO"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark"
+            android:layout_marginTop="20dp"
+            app:layout_constraintTop_toBottomOf="@id/streakContainer"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/chartCard"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:background="@drawable/bg_rounded_card"
+            android:layout_marginTop="8dp"
+            android:padding="16dp"
+            app:layout_constraintTop_toBottomOf="@id/tvReminderLabel">
+
+            <View
+                android:id="@+id/pieChartGraphic"
+                android:layout_width="110dp"
+                android:layout_height="110dp"
+                android:background="@drawable/bg_mock_pie_chart"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/tvMetricLabel"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/legendBox"/>
+
+            <LinearLayout
+                android:id="@+id/legendBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/pieChartGraphic">
+                <TextView android:id="@+id/tvLegendComplete" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="■ --% COMPLETED" android:textColor="@color/accent_green" android:textStyle="bold" android:textSize="12sp"/>
+                <TextView android:id="@+id/tvLegendIncomplete" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="■ --% INCOMPLETE" android:textColor="@color/accent_orange" android:textStyle="bold" android:textSize="12sp" android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvMetricLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OVERALL COMPLETION METRICS"
+                android:textColor="@color/accent_brown"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <TextView
+            android:id="@+id/tvRoutineHeading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ROUTINE COMPLETION"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark"
+            android:layout_marginTop="20dp"
+            app:layout_constraintTop_toBottomOf="@id/chartCard"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <LinearLayout
+            android:id="@+id/routineDisplayContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvRoutineHeading"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

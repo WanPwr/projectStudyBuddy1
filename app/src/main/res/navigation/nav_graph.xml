@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_dashboard">
+
+    <fragment
+        android:id="@+id/nav_dashboard"
+        android:name="com.example.projectstudybuddy1.DashboardFragment"
+        android:label="Home"
+        android:layout="@layout/fragment_dashboard" />
+
+    <fragment
+        android:id="@+id/nav_timer"
+        android:name="com.example.projectstudybuddy1.TimerFragment"
+        android:label="Timer"
+        android:layout="@layout/fragment_timer" />
+
+    <fragment
+        android:id="@+id/nav_tasks"
+        android:name="com.example.projectstudybuddy1.TaskManagerFragment"
+        android:label="Tasks"
+        android:layout="@layout/fragment_task_manager" />
+
+    <fragment
+        android:id="@+id/nav_journal"
+        android:name="com.example.projectstudybuddy1.JournalFragment"
+        android:label="Journal"
+        android:layout="@layout/fragment_journal" />
+
+    <fragment
+        android:id="@+id/nav_flashcards"
+        android:name="com.example.projectstudybuddy1.FlashcardFragment"
+        android:label="Cards"
+        android:layout="@layout/fragment_flashcard" />
+
+</navigation>

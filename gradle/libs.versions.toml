@@ -7,8 +7,11 @@ appcompat = "1.7.1"
 material = "1.14.0"
 activity = "1.13.0"
 constraintlayout = "2.2.1"
+coreSplashscreen = "1.0.1"
 # Added Room version here
 room = "2.6.1"
+navigationFragmentKtx = "2.9.8"
+navigationUiKtx = "2.9.8"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -21,6 +24,8 @@ constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayo
 # Added Room runtime and compiler definitions here
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
-
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-navigation-fragment-ktx = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragmentKtx" }
+androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation-ui-ktx", version.ref = "navigationUiKtx" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

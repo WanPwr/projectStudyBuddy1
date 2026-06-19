@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/ivTaskUser"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:src="@android:drawable/ic_menu_myplaces"
+        app:tint="@color/accent_brown"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <RadioGroup
+        android:id="@+id/toggleModeSelector"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_rounded_card"
+        android:padding="2dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <RadioButton android:id="@+id/rbRoutine" android:layout_width="wrap_content" android:layout_height="30dp" android:text="Routine" android:button="@null" android:paddingHorizontal="12dp" android:gravity="center" android:background="@android:color/transparent"/>
+        <RadioButton android:id="@+id/rbTodo" android:layout_width="wrap_content" android:layout_height="30dp" android:text="To-do" android:button="@null" android:paddingHorizontal="12dp" android:checked="true" android:gravity="center" android:background="@android:color/transparent"/>
+    </RadioGroup>
+
+    <LinearLayout
+        android:id="@+id/creationFormPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/ivTaskUser">
+        <EditText android:id="@+id/etTaskInput" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" android:hint="Add item title..." android:background="@drawable/bg_rounded_card" android:paddingHorizontal="12dp" android:textColor="@color/text_dark"/>
+        <ImageButton android:id="@+id/btnAddTask" android:layout_width="48dp" android:layout_height="48dp" android:src="@android:drawable/ic_input_add" android:backgroundTint="@color/accent_brown" app:tint="@android:color/white" android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvTasks"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/creationFormPanel"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
