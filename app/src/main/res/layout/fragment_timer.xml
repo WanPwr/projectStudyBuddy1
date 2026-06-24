@@ -1,235 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_cream"
-    android:padding="16dp">
+    android:padding="24dp">
 
-    <LinearLayout
-        android:id="@+id/layoutDisplayContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:layout_marginTop="32dp"
-        app:layout_constraintTop_toTopOf="parent">
+    <ImageView
+        android:id="@+id/ivTimerUser"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@android:drawable/ic_menu_myplaces"
+        android:contentDescription="User Avatar"
+        app:tint="@color/accent_brown"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
 
-        <TextView
-            android:id="@+id/tvTimerUpperHint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:06:00"
-            android:textColor="@color/text_hint_darker"
-            android:textSize="18sp"
-            tools:ignore="HardcodedText" />
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginVertical="12dp">
-
-            <TextView
-                android:id="@+id/tvEditHours"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="12dp"
-                android:text="00"
-                android:textSize="54sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:textColor="@color/text_dark"
-                tools:ignore="HardcodedText" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=":"
-                android:textSize="54sp"
-                android:textColor="@color/text_hint_darker"
-                tools:ignore="HardcodedText" />
-
-            <TextView
-                android:id="@+id/tvEditMinutes"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="12dp"
-                android:text="05"
-                android:textSize="54sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:textColor="@color/text_dark"
-                tools:ignore="HardcodedText" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=":"
-                android:textSize="54sp"
-                android:textColor="@color/text_hint_darker"
-                tools:ignore="HardcodedText" />
-
-            <TextView
-                android:id="@+id/tvEditSeconds"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="12dp"
-                android:text="00"
-                android:textSize="54sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:textColor="@color/text_dark"
-                tools:ignore="HardcodedText" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvTimerLowerHint"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="00:04:00"
-            android:textColor="@color/text_hint_darker"
-            android:textSize="18sp"
-            tools:ignore="HardcodedText" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/tvActiveUnitLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Editing: MINUTES"
-        android:textColor="@color/accent_brown"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/circleContainer"
+        android:layout_width="260dp"
+        android:layout_height="260dp"
+        android:background="@drawable/bg_streak_inactive"
+        android:layout_marginTop="40dp"
+        app:layout_constraintTop_toBottomOf="@id/ivTimerUser"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layoutDisplayContainer"
-        tools:ignore="HardcodedText" />
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/tvCountdownDisplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00:00"
+            android:textColor="@color/text_dark"
+            android:textSize="36sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <LinearLayout
-        android:id="@+id/layoutStepControllers"
+        android:id="@+id/layoutTimerControls"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginTop="24dp"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/circleContainer"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvActiveUnitLabel">
+        app:layout_constraintEnd_toEndOf="parent">
 
         <Button
-            android:id="@+id/btnTimerStepMinus"
-            android:layout_width="64dp"
-            android:layout_height="54dp"
-            android:text="-"
-            android:textSize="24sp"
-            android:backgroundTint="@color/divider_gray"
-            android:textColor="@color/text_dark"
-            android:layout_marginEnd="20dp"/>
+            android:id="@+id/btnTimerToggle"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="▶ Start"
+            android:backgroundTint="#007AFF"
+            android:textColor="@android:color/white"
+            android:layout_marginEnd="12dp"/>
 
         <Button
-            android:id="@+id/btnTimerStepPlus"
-            android:layout_width="64dp"
-            android:layout_height="54dp"
-            android:text="+"
-            android:textSize="24sp"
-            android:backgroundTint="@color/divider_gray"
-            android:textColor="@color/text_dark"
-            android:layout_marginStart="20dp"/>
+            android:id="@+id/btnTimerReset"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="⟳ Restart"
+            android:backgroundTint="@color/accent_orange"
+            android:textColor="@android:color/white"/>
     </LinearLayout>
 
     <GridLayout
-        android:id="@+id/gridPresets"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:columnCount="2"
         android:rowCount="2"
-        android:layout_marginTop="32dp"
-        android:paddingHorizontal="16dp"
-        app:layout_constraintTop_toBottomOf="@id/layoutStepControllers">
+        android:alignmentMode="alignBounds"
+        android:layout_marginTop="30dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutTimerControls">
 
-        <Button
-            android:id="@+id/btnPreset5Min"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_columnWeight="1"
-            android:layout_margin="6dp"
-            android:text="5 Min"
-            android:backgroundTint="@color/card_white"
-            android:textColor="@color/text_dark"
-            tools:ignore="HardcodedText" />
-
-        <Button
-            android:id="@+id/btnPreset10Min"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_columnWeight="1"
-            android:layout_margin="6dp"
-            android:text="10 Min"
-            android:backgroundTint="@color/card_white"
-            android:textColor="@color/text_dark"
-            tools:ignore="HardcodedText" />
-
-        <Button
-            android:id="@+id/btnPreset30Min"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_columnWeight="1"
-            android:layout_margin="6dp"
-            android:text="30 Min"
-            android:backgroundTint="@color/card_white"
-            android:textColor="@color/text_dark"
-            tools:ignore="HardcodedText" />
-
-        <Button
-            android:id="@+id/btnPreset45Min"
-            android:layout_width="0dp"
-            android:layout_height="50dp"
-            android:layout_columnWeight="1"
-            android:layout_margin="6dp"
-            android:text="45 Min"
-            android:backgroundTint="@color/card_white"
-            android:textColor="@color/text_dark"
-            tools:ignore="HardcodedText" />
+        <Button android:id="@+id/btnPreset5" android:layout_width="0dp" android:layout_weight="1" android:text="00:05:00" android:backgroundTint="@color/card_white" android:textColor="@color/text_dark" android:layout_margin="6dp"/>
+        <Button android:id="@+id/btnPreset10" android:layout_width="0dp" android:layout_weight="1" android:text="00:10:00" android:backgroundTint="@color/card_white" android:textColor="@color/text_dark" android:layout_margin="6dp"/>
+        <Button android:id="@+id/btnPreset30" android:layout_width="0dp" android:layout_weight="1" android:text="00:30:00" android:backgroundTint="@color/card_white" android:textColor="@color/text_dark" android:layout_margin="6dp"/>
+        <Button android:id="@+id/btnPreset45" android:layout_width="0dp" android:layout_weight="1" android:text="00:45:00" android:backgroundTint="@color/card_white" android:textColor="@color/text_dark" android:layout_margin="6dp"/>
     </GridLayout>
-
-    <LinearLayout
-        android:id="@+id/layoutActionGroup"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:layout_marginHorizontal="22dp"
-        android:layout_marginBottom="32dp"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <Button
-            android:id="@+id/btnTimerRestart"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_marginEnd="8dp"
-            android:text="🔄 Restart"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:backgroundTint="@color/accent_brown"
-            android:textColor="@android:color/white"
-            android:visibility="gone"
-            tools:visibility="visible"
-            tools:ignore="HardcodedText" />
-
-        <Button
-            android:id="@+id/btnTimerToggleAction"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:text="▶ Start"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:backgroundTint="@color/accent_green"
-            android:textColor="@android:color/white"
-            tools:ignore="HardcodedText" />
-    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
