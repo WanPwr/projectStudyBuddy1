@@ -17,7 +17,9 @@ public class TimerFragment extends Fragment {
     private Button btnToggle;
     private CountDownTimer countDownTimer;
     private boolean isRunning = false;
-    private long timeLeftInMillis = 300000; // Default: 5 Mins
+
+    private long defaultPresetTime = 300000; // Track the baseline choice (5 Mins)
+    private long timeLeftInMillis = 300000;
 
     @Nullable
     @Override
@@ -25,6 +27,7 @@ public class TimerFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_timer, container, false);
         tvDisplay = v.findViewById(R.id.tvCountdownDisplay);
         btnToggle = v.findViewById(R.id.btnTimerToggle);
+        Button btnReset = v.findViewById(R.id.btnTimerReset);
 
         v.findViewById(R.id.btnPreset5).setOnClickListener(view -> setPresetTime(300000));
         v.findViewById(R.id.btnPreset10).setOnClickListener(view -> setPresetTime(600000));
@@ -35,12 +38,20 @@ public class TimerFragment extends Fragment {
             if (isRunning) stopTimer(); else startTimer();
         });
 
+        // Setup the restart execution handler
+        btnReset.setOnClickListener(view -> {
+            stopTimer();
+            timeLeftInMillis = defaultPresetTime; // Roll back time sequence to initial selection
+            updateCountdownText();
+        });
+
         updateCountdownText();
         return v;
     }
 
     private void setPresetTime(long millis) {
         stopTimer();
+        defaultPresetTime = millis;
         timeLeftInMillis = millis;
         updateCountdownText();
     }
@@ -60,7 +71,7 @@ public class TimerFragment extends Fragment {
             }
         }.start();
         isRunning = true;
-        btnToggle.setText("■ Pause");
+        btnToggle.setText("⏸ Pause"); // Toggles visual icon to hint pause state
     }
 
     private void stopTimer() {
