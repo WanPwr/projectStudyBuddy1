@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <!--solid white circle-->
+    <solid android:color="#FFFFFF" />
+
+    <!--Setting the exact size so it fits perfectly inside the track -->
+    <size
+        android:width="54dp"
+        android:height="54dp" />
+</shape>

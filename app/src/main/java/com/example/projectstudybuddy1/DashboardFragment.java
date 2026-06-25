@@ -31,7 +31,7 @@ public class DashboardFragment extends Fragment {
         calculateMetrics();
         renderRoutineSummary();
         return view;
-    }//testing
+    }
 
     private void calculateMetrics() {
         List<TaskItem> allTodos = db.appDao().getAllTodos();

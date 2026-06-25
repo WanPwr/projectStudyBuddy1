@@ -14,4 +14,10 @@
         <item name="colorSurface">@color/card_white</item>
         <item name="colorOnSurface">@color/text_dark</item>
     </style>
+        <color name="timer_bg">#FAF4EB</color>
+        <color name="timer_ended_bg">#8B7355</color>
+        <color name="blue_btn">#1A80E5</color>
+        <color name="org_btn">#E07A5F</color>
+        <color name="black">#000000</color>
+        <color name="white">#FFFFFF</color>
 </resources>

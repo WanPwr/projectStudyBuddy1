@@ -1,62 +1,68 @@
 package com.example.projectstudybuddy1;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
+import androidx.appcompat.app.AppCompatActivity;
 import java.util.Locale;
 
-public class TimerFragment extends Fragment {
+public class TimerFragment extends AppCompatActivity {
+
     private TextView tvDisplay;
     private Button btnToggle;
+    private Button btnReset;
     private CountDownTimer countDownTimer;
     private boolean isRunning = false;
 
-    private long defaultPresetTime = 300000; // Track the baseline choice (5 Mins)
-    private long timeLeftInMillis = 300000;
+    //Start at 0 so it displays 00:00:00 initially
+    private long timeLeftInMillis = 0;
 
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_timer, container, false);
-        tvDisplay = v.findViewById(R.id.tvCountdownDisplay);
-        btnToggle = v.findViewById(R.id.btnTimerToggle);
-        Button btnReset = v.findViewById(R.id.btnTimerReset);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.fragment_timer);
 
-        v.findViewById(R.id.btnPreset5).setOnClickListener(view -> setPresetTime(300000));
-        v.findViewById(R.id.btnPreset10).setOnClickListener(view -> setPresetTime(600000));
-        v.findViewById(R.id.btnPreset30).setOnClickListener(view -> setPresetTime(1800000));
-        v.findViewById(R.id.btnPreset45).setOnClickListener(view -> setPresetTime(2700000));
+        //Link UI elements
+        tvDisplay = findViewById(R.id.tvCountdownDisplay);
+        btnToggle = findViewById(R.id.btnTimerToggle);
+        btnReset = findViewById(R.id.btnTimerReset);
 
+        //Preset Time Buttons
+        findViewById(R.id.btnPreset5).setOnClickListener(view -> setPresetTime(300000));
+        findViewById(R.id.btnPreset10).setOnClickListener(view -> setPresetTime(600000));
+        findViewById(R.id.btnPreset30).setOnClickListener(view -> setPresetTime(1800000));
+        findViewById(R.id.btnPreset45).setOnClickListener(view -> setPresetTime(2700000));
+
+        //Start/Pause Toggle
         btnToggle.setOnClickListener(view -> {
-            if (isRunning) stopTimer(); else startTimer();
+            if (isRunning) {
+                stopTimer();
+            } else {
+                startTimer();
+            }
         });
 
-        // Setup the restart execution handler
+        //Reset Button Logic - Forces timer to 00:00:00
         btnReset.setOnClickListener(view -> {
             stopTimer();
-            timeLeftInMillis = defaultPresetTime; // Roll back time sequence to initial selection
+            timeLeftInMillis = 0; // Set back to 0
             updateCountdownText();
         });
 
         updateCountdownText();
-        return v;
     }
 
     private void setPresetTime(long millis) {
         stopTimer();
-        defaultPresetTime = millis;
         timeLeftInMillis = millis;
         updateCountdownText();
     }
 
     private void startTimer() {
+        if (timeLeftInMillis == 0) return; // Prevent starting if time is 00:00:00
+
         countDownTimer = new CountDownTimer(timeLeftInMillis, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
@@ -68,14 +74,23 @@ public class TimerFragment extends Fragment {
             public void onFinish() {
                 isRunning = false;
                 btnToggle.setText("▶ Start");
+                timeLeftInMillis = 0;
+                updateCountdownText();
+
+                //Automatically navigate to Timer Ended Screen
+                Intent intent = new Intent(TimerFragment.this, TimerEndedActivity.class);
+                startActivity(intent);
             }
         }.start();
+
         isRunning = true;
-        btnToggle.setText("⏸ Pause"); // Toggles visual icon to hint pause state
+        btnToggle.setText("⏸ Pause");
     }
 
     private void stopTimer() {
-        if (countDownTimer != null) countDownTimer.cancel();
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
         isRunning = false;
         btnToggle.setText("▶ Start");
     }
@@ -88,8 +103,9 @@ public class TimerFragment extends Fragment {
     }
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
+    protected void onDestroy() {
+        super.onDestroy();
+        //Prevent memory leaks if the activity is destroyed while running
         stopTimer();
     }
 }
