@@ -23,6 +23,14 @@
         android:layout="@layout/fragment_task_manager" />
 
     <fragment
+        android:id="@+id/routineAddFragment"
+        android:name="com.example.projectstudybuddy1.RoutineAddFragment" />
+
+    <fragment
+        android:id="@+id/routineDetailFragment"
+        android:name="com.example.projectstudybuddy1.RoutineDetailFragment" />
+
+    <fragment
         android:id="@+id/nav_journal"
         android:name="com.example.projectstudybuddy1.JournalFragment"
         android:label="Journal"

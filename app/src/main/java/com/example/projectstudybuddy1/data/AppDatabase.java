@@ -11,7 +11,8 @@ import androidx.room.Update;
 import androidx.room.Delete;
 import java.util.List;
 
-@Database(entities = {TaskItem.class, JournalEntry.class, FlashcardItem.class}, version = 1, exportSchema = false)
+// 1. CHANGED: Added SubTaskItem.class and bumped version to 3
+@Database(entities = {TaskItem.class, SubTaskItem.class, JournalEntry.class, FlashcardItem.class}, version = 3, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract AppDao appDao();
@@ -23,6 +24,7 @@ public abstract class AppDatabase extends RoomDatabase {
                 if (INSTANCE == null) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     AppDatabase.class, "studybuddy_db")
+                            .fallbackToDestructiveMigration()
                             .allowMainThreadQueries()
                             .build();
                 }
@@ -33,7 +35,7 @@ public abstract class AppDatabase extends RoomDatabase {
 
     @Dao
     public interface AppDao {
-        // Task operations
+        // --- Task operations ---
         @Query("SELECT * FROM tasks WHERE isRoutine = 0")
         List<TaskItem> getAllTodos();
 
@@ -49,7 +51,20 @@ public abstract class AppDatabase extends RoomDatabase {
         @Delete
         void deleteTask(TaskItem item);
 
-        // Journal operations
+        // --- NEW: SubTask operations ---
+        @Query("SELECT * FROM subtask_table WHERE parentRoutineId = :routineId")
+        List<SubTaskItem> getSubTasksForRoutine(int routineId);
+
+        @Insert
+        void insertSubTask(SubTaskItem item);
+
+        @Update
+        void updateSubTask(SubTaskItem item);
+
+        @Delete
+        void deleteSubTask(SubTaskItem item);
+
+        // --- Journal operations ---
         @Query("SELECT * FROM journal ORDER BY id DESC")
         List<JournalEntry> getAllJournalEntries();
 
@@ -62,7 +77,7 @@ public abstract class AppDatabase extends RoomDatabase {
         @Delete
         void deleteJournal(JournalEntry entry);
 
-        // Flashcard operations
+        // --- Flashcard operations ---
         @Query("SELECT DISTINCT deckName FROM flashcards")
         List<String> getUniqueDecks();
 

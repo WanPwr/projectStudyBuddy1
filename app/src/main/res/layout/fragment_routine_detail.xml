@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FAF4EB"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/ivTaskUser"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:src="@android:drawable/ic_menu_myplaces"
+        app:tint="@color/accent_brown"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <RadioGroup
+        android:id="@+id/rgTaskTypeDetail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/ivTaskUser">
+
+        <RadioButton
+            android:id="@+id/rbRoutine"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:text="Routine"
+            android:button="@null"
+            android:paddingHorizontal="16dp"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:checked="true"
+            android:textColor="@color/selector_toggle_text"
+            android:background="@drawable/bg_toggle_left"/>
+
+        <RadioButton
+            android:id="@+id/rbTodo"
+            android:layout_width="wrap_content"
+            android:layout_height="35dp"
+            android:text="To-do"
+            android:button="@null"
+            android:paddingHorizontal="16dp"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textColor="@color/selector_toggle_text"
+            android:background="@drawable/bg_toggle_right"/>
+    </RadioGroup>
+
+    <View
+        android:id="@+id/topDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#000000"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/ivTaskUser"/>
+
+    <TextView
+        android:id="@+id/tvParentRoutineTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ROUTINE TITLE"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        android:textColor="#000000"
+        android:padding="16dp"
+        android:background="@drawable/border_rounded_box"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/topDivider"
+        android:layout_marginTop="20dp"
+        android:layout_marginHorizontal="30dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvSubTasks"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintTop_toBottomOf="@id/tvParentRoutineTitle"
+        app:layout_constraintBottom_toTopOf="@id/fabCompleteRoutine"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabCompleteRoutine"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_done"
+        app:backgroundTint="#C18A58"
+        app:tint="@color/white"
+        app:fabSize="normal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="30dp"
+        android:layout_marginBottom="16dp"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddSubTask"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/ic_input_add"
+        app:backgroundTint="#C18A58"
+        app:tint="@color/black"
+        app:fabSize="normal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="30dp"
+        android:layout_marginBottom="16dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
