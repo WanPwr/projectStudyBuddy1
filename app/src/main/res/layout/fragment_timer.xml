@@ -83,12 +83,12 @@
         app:layout_constraintTop_toBottomOf="@id/layoutTimerControls">
 
         <Button
-            android:id="@+id/btnPreset5"
+            android:id="@+id/btnPreset100"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_columnWeight="1"
             android:layout_margin="8dp"
-            android:text="00:05:00" />
+            android:text="00:00:10" />
 
         <Button
             android:id="@+id/btnPreset10"
