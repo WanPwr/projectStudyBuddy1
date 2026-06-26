@@ -11,31 +11,34 @@ import java.util.List;
 @Dao
 public interface StudyBuddyDao {
 
+    // Original Core User Task Operations
+    @Query("SELECT * FROM todo_list WHERE userId = :userId ORDER BY createdAt DESC")
+    List<TodoEntity> getAllTasksForUser(int userId);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertTask(TodoEntity todo);
+
+    @Update
+    void updateTask(TodoEntity todo);
+
+    @Delete
+    void deleteTask(TodoEntity todo);
+
+    // ==========================================================
+    // NEW TASK WORKSPACE CONNECTIONS (Google Keep-Style Subtasks)
+    // ==========================================================
+
+    // Parent Task Row Sync Engine
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insertTask(TaskItem task);
 
     @Update
     void updateTask(TaskItem task);
 
-    @Delete
-    void deleteTask(TaskItem task);
-
-    @Query("SELECT * FROM tasks WHERE userId = :userId ORDER BY taskId DESC")
-    List<TaskItem> getAllTasks(int userId);
-
-    @Query("SELECT * FROM tasks WHERE taskId = :taskId LIMIT 1")
-    TaskItem getTaskById(int taskId);
-
     @Query("SELECT * FROM tasks ORDER BY taskId DESC")
-    List<TaskItem> getAllTasksFallback();
+    List<TaskItem> getAllTasks();
 
-    // FIXED: Added wildcard search string support directly within your primary data access object interface
-    @Query("SELECT * FROM tasks WHERE userId = :userId AND title LIKE '%' || :searchQuery || '%' ORDER BY taskId DESC")
-    List<TaskItem> searchTasksByQuery(int userId, String searchQuery);
-
-    // ==========================================================
-    // NESTED SUB-TASK WORKSPACES
-    // ==========================================================
+    // Child Nested Sub-Task Operations
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertSubTask(SubTaskItem subTask);
 
@@ -45,15 +48,10 @@ public interface StudyBuddyDao {
     @Query("SELECT * FROM sub_tasks WHERE parentTaskId = :parentId")
     List<SubTaskItem> getSubTasksForParent(int parentId);
 
-    // ==========================================================
-    // FLASHCARD CARD ENGINE WORKSPACES
-    // ==========================================================
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertCard(FlashcardItem card);
+    // Live Progress Dashboard Metrics Queries
+    @Query("SELECT COUNT(*) FROM sub_tasks")
+    int getTotalSubTaskCount();
 
-    @Delete
-    void deleteCard(FlashcardItem card);
-
-    @Query("SELECT * FROM flashcard_cards WHERE parentDeckId = :deckId ORDER BY cardId ASC")
-    List<FlashcardItem> getCardsForDeck(int deckId);
+    @Query("SELECT COUNT(*) FROM sub_tasks WHERE isChecked = 1")
+    int getCheckedSubTaskCount();
 }

@@ -12,7 +12,8 @@ import androidx.room.Delete;
 import androidx.room.OnConflictStrategy;
 import java.util.List;
 
-@Database(entities = {TaskItem.class, FlashcardItem.class, SubTaskItem.class}, version = 3, exportSchema = false)
+// Added SubTaskItem.class to the database entity array list registry
+@Database(entities = {TaskItem.class, JournalEntry.class, FlashcardItem.class, SubTaskItem.class}, version = 1, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract AppDao appDao();
@@ -25,7 +26,7 @@ public abstract class AppDatabase extends RoomDatabase {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     AppDatabase.class, "studybuddy_db")
                             .allowMainThreadQueries()
-                            .fallbackToDestructiveMigration()
+                            .fallbackToDestructiveMigration() // Wipes data safely if schema mismatch happens
                             .build();
                 }
             }
@@ -35,13 +36,14 @@ public abstract class AppDatabase extends RoomDatabase {
 
     @Dao
     public interface AppDao {
-        // --- Core Task & Journal Operations (User Filtered) ---
-        @Query("SELECT * FROM tasks WHERE isRoutine = 0 AND userId = :userId AND title NOT LIKE 'JOURNAL_NOTE:%' AND title NOT LIKE 'DECK_NOTE:%'")
-        List<TaskItem> getAllTodos(int userId);
+        // Task operations
+        @Query("SELECT * FROM tasks WHERE isRoutine = 0")
+        List<TaskItem> getAllTodos();
 
-        @Query("SELECT * FROM tasks WHERE isRoutine = 1 AND userId = :userId")
-        List<TaskItem> getAllRoutines(int userId);
+        @Query("SELECT * FROM tasks WHERE isRoutine = 1")
+        List<TaskItem> getAllRoutines();
 
+        // Modified task inserts to return 'long' so we get the auto-generated row id for nested mapping
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         long insertTask(TaskItem item);
 
@@ -51,17 +53,38 @@ public abstract class AppDatabase extends RoomDatabase {
         @Delete
         void deleteTask(TaskItem item);
 
-        @Query("SELECT * FROM tasks WHERE userId = :userId ORDER BY taskId DESC")
-        List<TaskItem> getAllTasks(int userId);
+        // Journal operations
+        @Query("SELECT * FROM journal ORDER BY id DESC")
+        List<JournalEntry> getAllJournalEntries();
 
-        @Query("SELECT * FROM tasks WHERE taskId = :taskId LIMIT 1")
-        TaskItem getTaskById(int taskId);
+        @Insert
+        void insertJournal(JournalEntry entry);
 
-        // FIXED: Added wildcard query search feature into the correct active runtime AppDao definition
-        @Query("SELECT * FROM tasks WHERE userId = :userId AND title LIKE '%' || :searchQuery || '%' ORDER BY taskId DESC")
-        List<TaskItem> searchTasksByQuery(int userId, String searchQuery);
+        @Update
+        void updateJournal(JournalEntry entry);
 
-        // --- Keep-Style Checklist Operations ---
+        @Delete
+        void deleteJournal(JournalEntry entry);
+
+        // Flashcard operations
+        @Query("SELECT DISTINCT deckName FROM flashcards")
+        List<String> getUniqueDecks();
+
+        @Query("SELECT * FROM flashcards WHERE deckName = :deck")
+        List<FlashcardItem> getCardsFromDeck(String deck);
+
+        @Insert
+        void insertCard(FlashcardItem card);
+
+        @Delete
+        void deleteCard(FlashcardItem card);
+
+        // ==========================================
+        // NEW GOOGLE KEEP SUB-TASK WORKSPACE HANDLERS
+        // ==========================================
+        @Query("SELECT * FROM tasks ORDER BY taskId DESC")
+        List<TaskItem> getAllTasks();
+
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         void insertSubTask(SubTaskItem subTask);
 
@@ -76,18 +99,5 @@ public abstract class AppDatabase extends RoomDatabase {
 
         @Query("SELECT COUNT(*) FROM sub_tasks WHERE isChecked = 1")
         int getCheckedSubTaskCount();
-
-        // --- Flashcard Operations ---
-        @Query("SELECT * FROM flashcard_cards")
-        List<FlashcardItem> getUniqueDecks();
-
-        @Insert(onConflict = OnConflictStrategy.REPLACE)
-        void insertCard(FlashcardItem card);
-
-        @Delete
-        void deleteCard(FlashcardItem card);
-
-        @Query("SELECT * FROM flashcard_cards WHERE parentDeckId = :deckId ORDER BY cardId ASC")
-        List<FlashcardItem> getCardsForDeck(int deckId);
     }
 }
