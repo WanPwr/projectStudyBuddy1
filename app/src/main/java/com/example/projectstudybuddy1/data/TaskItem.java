@@ -6,9 +6,13 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "tasks")
 public class TaskItem {
     @PrimaryKey(autoGenerate = true)
-    public int id;
+    public int taskId;
 
     public String title;
-    public boolean isCompleted;
-    public boolean isRoutine; // false = todo list, true = routine list
+    public String dateCreated;
+    public boolean isPinned = false;
+
+    // Unifies your older queries and resolves the compilation symbol errors:
+    public boolean isRoutine = false;
+    public boolean completed = false;
 }
