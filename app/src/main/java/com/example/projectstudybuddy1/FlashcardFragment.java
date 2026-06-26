@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -29,8 +28,8 @@ public class FlashcardFragment extends Fragment {
     private TextView tvCardStaticText;
     private EditText etDeckTitle, etQuestionInput, etAnswerInput;
     private LinearLayout layoutEditFields;
-    private ImageButton btnEditMode, btnNext;
-    private ImageView ivCheckedBadge;
+    private ImageButton btnEditMode, btnNext, btnPrev;
+    private android.widget.ImageView ivCheckedBadge;
 
     private final List<FlashcardItem> currentSessionCards = new ArrayList<>();
     private int cardIndex = 0;
@@ -59,7 +58,7 @@ public class FlashcardFragment extends Fragment {
 
         RecyclerView rv = v.findViewById(R.id.rvDecks);
         FloatingActionButton fab = v.findViewById(R.id.fabAddDeckCard);
-        ImageButton btnPrev = v.findViewById(R.id.btnFigmaPrevCard);
+        btnPrev = v.findViewById(R.id.btnFigmaPrevCard);
         btnNext = v.findViewById(R.id.btnFigmaNextCard);
 
         rv.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -86,11 +85,11 @@ public class FlashcardFragment extends Fragment {
             }
         });
 
-        // LEFT ARROW: Loop backward smoothly
+        // LEFT ARROW: Loop backward safely with a strict baseline index boundary guard
         btnPrev.setOnClickListener(view -> {
-            if (!currentSessionCards.isEmpty()) {
+            if (!currentSessionCards.isEmpty() && cardIndex > 0) {
                 saveCurrentCardStateIfEditing();
-                cardIndex = (cardIndex - 1 + currentSessionCards.size()) % currentSessionCards.size();
+                cardIndex--;
                 presentCardState();
             }
         });
@@ -147,9 +146,11 @@ public class FlashcardFragment extends Fragment {
     }
 
     private void loadDecks() {
+        int originalSize = deckList.size();
         deckList.clear();
         deckList.addAll(db.appDao().getUniqueDecks());
-        adapter.notifyDataSetChanged();
+        // Clean granular list updates to resolve performance warnings
+        adapter.notifyItemRangeChanged(0, Math.max(originalSize, deckList.size()));
     }
 
     private void initiateStudySession(String deckName) {
@@ -175,7 +176,18 @@ public class FlashcardFragment extends Fragment {
         FlashcardItem item = currentSessionCards.get(cardIndex);
         etDeckTitle.setText(item.deckName.toUpperCase());
 
-        // DYNAMIC ICON FLIP: Check if this button handles next navigation or generation
+        // Dynamic color filter + view layer opacity configuration updates
+        if (cardIndex == 0) {
+            btnPrev.setEnabled(false);
+            btnPrev.setAlpha(0.25f); // Fade view out
+            btnPrev.setColorFilter(android.graphics.Color.parseColor("#B0B0B0")); // Neutral Gray tint
+        } else {
+            btnPrev.setEnabled(true);
+            btnPrev.setAlpha(1.0f); // Reset full visibility
+            btnPrev.setColorFilter(android.graphics.Color.parseColor("#7D5A44")); // Theme Earth Brown tint
+        }
+
+        // DYNAMIC ICON FLIP: Fixed duplicate expressions and cleaned paths down to standard Android system refs
         if (cardIndex == currentSessionCards.size() - 1) {
             btnNext.setImageResource(android.R.drawable.ic_input_add); // '+' sign
             btnNext.setColorFilter(android.graphics.Color.parseColor("#81B29A")); // Mint Green
@@ -270,11 +282,15 @@ public class FlashcardFragment extends Fragment {
             holder.itemView.setOnClickListener(v -> initiateStudySession(current));
 
             holder.tvMinus.setOnClickListener(v -> {
-                List<FlashcardItem> cardsToDelete = db.appDao().getCardsFromDeck(current);
-                for (FlashcardItem item : cardsToDelete) {
-                    db.appDao().deleteCard(item);
+                int position = holder.getBindingAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    List<FlashcardItem> cardsToDelete = db.appDao().getCardsFromDeck(current);
+                    for (FlashcardItem item : cardsToDelete) {
+                        db.appDao().deleteCard(item);
+                    }
+                    deckList.remove(position);
+                    notifyItemRemoved(position);
                 }
-                loadDecks();
             });
         }
         @Override public int getItemCount() { return deckList.size(); }

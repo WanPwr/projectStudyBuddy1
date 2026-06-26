@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingHorizontal="8dp">
+
+    <ImageView
+        android:id="@+id/ivSubDragGrip"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@android:drawable/ic_menu_sort_by_size"
+        android:contentDescription="Drag reorder handle"
+        app:tint="@android:color/darker_gray"/>
+
+    <CheckBox
+        android:id="@+id/cbSubCheckbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"/>
+
+    <EditText
+        android:id="@+id/etSubTaskValue"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:hint="List item text..."
+        android:textColor="@color/text_dark"
+        android:textColorHint="@android:color/darker_gray"
+        android:textSize="14sp"
+        android:background="@android:color/transparent"
+        android:importantForAutofill="no"
+        android:inputType="textCapSentences"/>
+
+    <ImageButton
+        android:id="@+id/btnDeleteSubRow"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:background="@android:color/transparent"
+        android:contentDescription="Clear item"
+        app:tint="@android:color/darker_gray"/>
+</LinearLayout>
