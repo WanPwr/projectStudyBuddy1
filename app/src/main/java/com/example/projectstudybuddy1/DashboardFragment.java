@@ -1,6 +1,10 @@
 package com.example.projectstudybuddy1;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,13 +24,17 @@ import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class DashboardFragment extends Fragment {
     private AppDatabase db;
     private PieChart pieChart;
+    private TextView tvStreakCountLabel;
     private MasterTaskAdapter masterAdapter;
     private final List<TaskItem> masterTaskList = new ArrayList<>();
 
@@ -36,8 +44,8 @@ public class DashboardFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_dashboard, container, false);
         db = AppDatabase.getDatabase(requireContext());
 
-        // Bind the Pie Chart component view
         pieChart = v.findViewById(R.id.todoPieChart);
+        tvStreakCountLabel = v.findViewById(R.id.tvStreakCountLabel);
 
         RecyclerView rvMaster = v.findViewById(R.id.rvMasterTasks);
         rvMaster.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -45,6 +53,7 @@ public class DashboardFragment extends Fragment {
         rvMaster.setAdapter(masterAdapter);
 
         loadDashboardMetrics();
+        evaluateDailyStreakCheckIn();
         return v;
     }
 
@@ -52,6 +61,73 @@ public class DashboardFragment extends Fragment {
     public void onResume() {
         super.onResume();
         loadDashboardMetrics();
+        refreshStreakDisplay();
+    }
+
+    private void refreshStreakDisplay() {
+        if (tvStreakCountLabel == null) return;
+        SharedPreferences prefs = requireContext().getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
+        int currentStreak = prefs.getInt("user_streak_count", 1);
+        tvStreakCountLabel.setText(String.format(Locale.getDefault(), "🔥 Current Streak: %d Days", currentStreak));
+    }
+
+    private void evaluateDailyStreakCheckIn() {
+        SharedPreferences prefs = requireContext().getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String todayString = sdf.format(new Date());
+        String lastCheckInDate = prefs.getString("last_checkin_date", "");
+
+        if (todayString.equals(lastCheckInDate)) {
+            refreshStreakDisplay();
+            return;
+        }
+
+        int currentStreak = prefs.getInt("user_streak_count", 0);
+        try {
+            if (!lastCheckInDate.isEmpty()) {
+                Calendar todayCal = Calendar.getInstance();
+                Calendar prevCal = Calendar.getInstance();
+                prevCal.setTime(sdf.parse(lastCheckInDate));
+                prevCal.add(Calendar.DAY_OF_YEAR, 1);
+
+                String expectedStreakDay = sdf.format(prevCal.getTime());
+                if (todayString.equals(expectedStreakDay)) {
+                    currentStreak++;
+                } else {
+                    currentStreak = 1;
+                }
+            } else {
+                currentStreak = 1;
+            }
+        } catch (Exception e) {
+            currentStreak = 1;
+        }
+
+        final int verifiedStreakValue = currentStreak;
+
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_daily_checkin, null);
+        AlertDialog dialog = new AlertDialog.Builder(getContext()).create();
+        dialog.setView(dialogView);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        TextView tvSubtitle = dialogView.findViewById(R.id.tvCheckInSubtitle);
+        tvSubtitle.setText(String.format(Locale.getDefault(), "Welcome back! You are on a %d day streak!", verifiedStreakValue));
+
+        dialogView.findViewById(R.id.btnCheckInConfirm).setOnClickListener(v -> {
+            prefs.edit()
+                    .putString("last_checkin_date", todayString)
+                    .putInt("user_streak_count", verifiedStreakValue)
+                    .apply();
+
+            refreshStreakDisplay();
+            dialog.dismiss();
+        });
+
+        dialog.setCancelable(false);
+        dialog.show();
     }
 
     private void loadDashboardMetrics() {
@@ -60,37 +136,30 @@ public class DashboardFragment extends Fragment {
         masterTaskList.addAll(db.appDao().getAllTasks());
         masterAdapter.notifyItemRangeChanged(0, Math.max(previousSize, masterTaskList.size()));
 
-        // Calculate database metrics
         int totalItems = db.appDao().getTotalSubTaskCount();
         int completedItems = db.appDao().getCheckedSubTaskCount();
         int incompleteItems = totalItems - completedItems;
 
-        // Fallback display initialization when no data entries exist yet
         if (totalItems == 0) {
             incompleteItems = 1;
         }
 
-        // Configure datasets following the Figma design layout
         ArrayList<PieEntry> entries = new ArrayList<>();
         entries.add(new PieEntry((float) completedItems, "COMPLETED"));
         entries.add(new PieEntry((float) incompleteItems, "INCOMPLETE"));
 
         PieDataSet dataSet = new PieDataSet(entries, "");
-
-        // Match color scheme: Mint Green vs Terracotta Coral Red
         ArrayList<Integer> customColors = new ArrayList<>();
         customColors.add(Color.parseColor("#81B29A"));
         customColors.add(Color.parseColor("#E07A5F"));
         dataSet.setColors(customColors);
 
-        // Fixed syntax errors: passing float values directly to formatting methods
         dataSet.setValueTextSize(13f);
         dataSet.setValueTextColor(Color.WHITE);
 
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
 
-        // Customize layout structure of the chart space
         pieChart.getDescription().setEnabled(false);
         pieChart.getLegend().setTextColor(Color.parseColor("#3D405B"));
         pieChart.setUsePercentValues(true);

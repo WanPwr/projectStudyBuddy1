@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="300dp"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
@@ -18,9 +19,9 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Daily Check in"
+            android:text="WELCOME BACK"
             android:textStyle="bold"
-            android:textSize="24sp"
+            android:textSize="22sp"
             android:textColor="#000000"
             android:fontFamily="sans-serif-condensed" />
 
@@ -50,7 +51,7 @@
                 android:layout_gravity="center" />
         </FrameLayout>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCheckInConfirm"
             android:layout_width="match_parent"
             android:layout_height="52dp"
@@ -61,6 +62,7 @@
             android:backgroundTint="#00CC44"
             android:insetTop="0dp"
             android:insetBottom="0dp"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="12dp"
+            tools:ignore="HardcodedText" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>
