@@ -11,9 +11,49 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="visible">
-        <TextView android:id="@+id/tvFCHeader" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Flashcards Decks" android:textStyle="bold" android:textSize="18sp" android:textColor="@color/text_dark" app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"/>
-        <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvDecks" android:layout_width="match_parent" android:layout_height="0dp" android:layout_marginTop="12dp" app:layout_constraintTop_toBottomOf="@id/tvFCHeader" app:layout_constraintBottom_toBottomOf="parent"/>
-        <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/fabAddDeckCard" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@android:drawable/ic_input_add" android:contentDescription="Add Flashcard Deck" android:backgroundTint="@color/accent_brown" app:tint="@android:color/white" android:layout_margin="16dp" app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+
+        <ImageView
+            android:id="@+id/ivUserAvatar"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@android:drawable/ic_menu_myplaces"
+            android:contentDescription="Profile"
+            app:tint="@color/accent_brown"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvFCHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Flashcards"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:textColor="@color/text_dark"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/ivUserAvatar"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvDecks"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="12dp"
+            app:layout_constraintTop_toBottomOf="@id/tvFCHeader"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAddDeckCard"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@android:drawable/ic_input_add"
+            android:contentDescription="New Deck"
+            android:backgroundTint="@color/accent_orange"
+            app:tint="@android:color/white"
+            app:fabCustomSize="56dp"
+            android:layout_margin="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -21,23 +61,153 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:visibility="gone">
-        <ImageButton android:id="@+id/btnStudyBack" android:layout_width="48dp" android:layout_height="48dp" android:src="?attr/homeAsUpIndicator" android:contentDescription="Back" android:background="@android:color/transparent" app:tint="@color/accent_brown" app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"/>
-        <TextView android:id="@+id/tvDeckSessionTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DECK" android:textStyle="bold" android:textColor="@color/text_dark" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="@id/btnStudyBack" app:layout_constraintStart_toEndOf="@id/btnStudyBack"/>
+
+        <ImageButton
+            android:id="@+id/btnStudyBack"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="?attr/homeAsUpIndicator"
+            android:contentDescription="Back"
+            android:background="@android:color/transparent"
+            app:tint="@color/accent_brown"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <ImageButton
+            android:id="@+id/btnEditModeToggle"
+            android:layout_width="44dp"
+            android:layout_height="24dp"
+            android:background="@drawable/bg_figma_card"
+            android:src="@android:drawable/ic_menu_edit"
+            app:tint="@color/accent_brown"
+            android:padding="2dp"
+            android:contentDescription="Edit Card"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <ImageView
+            android:id="@+id/ivCheckStatusBadge"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@android:drawable/checkbox_on_background"
+            app:tint="@color/accent_green"
+            android:visibility="gone"
+            android:contentDescription="Save Changes"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <EditText
+            android:id="@+id/etFigmaDeckTitle"
+            android:layout_width="140dp"
+            android:layout_height="35dp"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            android:textColor="@color/text_dark"
+            android:background="@drawable/bg_figma_card"
+            android:inputType="text"
+            android:importantForAutofill="no"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/btnStudyBack"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <ImageButton
+            android:id="@+id/btnFigmaPrevCard"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_media_previous"
+            android:background="@android:color/transparent"
+            app:tint="@color/accent_brown"
+            android:contentDescription="Previous"
+            app:layout_constraintTop_toTopOf="@id/cardWorkspace"
+            app:layout_constraintBottom_toBottomOf="@id/cardWorkspace"
+            app:layout_constraintStart_toStartOf="parent"/>
 
         <androidx.cardview.widget.CardView
             android:id="@+id/cardWorkspace"
-            android:layout_width="280dp"
-            android:layout_height="340dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="6dp"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-            <TextView android:id="@+id/tvCardContent" android:layout_width="match_parent" android:layout_height="match_parent" android:text="Question/Answer Field Data" android:gravity="center" android:padding="20dp" android:textColor="@color/text_dark" android:textSize="20sp" android:textStyle="bold"/>
+            android:layout_width="0dp"
+            android:layout_height="280dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            android:layout_marginHorizontal="8dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/etFigmaDeckTitle"
+            app:layout_constraintStart_toEndOf="@id/btnFigmaPrevCard"
+            app:layout_constraintEnd_toStartOf="@+id/btnFigmaNextCard">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_figma_card">
+
+                <LinearLayout
+                    android:id="@+id/layoutEditFields"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:gravity="center"
+                    android:visibility="gone">
+
+                    <EditText
+                        android:id="@+id/etFigmaQuestionInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="QUESTION"
+                        android:gravity="center"
+                        android:textColor="@color/text_dark"
+                        android:textColorHint="@android:color/darker_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:background="@android:color/transparent"
+                        android:layout_marginBottom="20dp"
+                        android:importantForAutofill="no"
+                        android:inputType="textMultiLine"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@android:color/darker_gray"
+                        android:layout_marginBottom="20dp"/>
+
+                    <EditText
+                        android:id="@+id/etFigmaAnswerInput"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="ANSWER"
+                        android:gravity="center"
+                        android:textColor="#81B29A"
+                        android:textColorHint="@android:color/darker_gray"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:background="@android:color/transparent"
+                        android:importantForAutofill="no"
+                        android:inputType="textMultiLine"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvCardContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:padding="24dp"
+                    android:textColor="@color/text_dark"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:visibility="visible"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
 
-        <Button android:id="@+id/btnNextCard" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Next ➔" android:backgroundTint="@color/accent_brown" android:layout_marginTop="24dp" app:layout_constraintTop_toBottomOf="@id/cardWorkspace" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <ImageButton
+            android:id="@+id/btnFigmaNextCard"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="Navigation Arrow Icon"
+            app:layout_constraintTop_toTopOf="@id/cardWorkspace"
+            app:layout_constraintBottom_toBottomOf="@id/cardWorkspace"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
