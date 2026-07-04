@@ -1,17 +1,12 @@
 package com.example.projectstudybuddy1;
 
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -24,211 +19,134 @@ import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class DashboardFragment extends Fragment {
+
     private AppDatabase db;
     private PieChart pieChart;
     private TextView tvStreakCountLabel;
-    private MasterTaskAdapter masterAdapter;
-    private final List<TaskItem> masterTaskList = new ArrayList<>();
+    private RecyclerView rvMasterTasks;
+    private DashboardListAdapter listAdapter;
+    private final List<TaskItem> routineDatasetList = new ArrayList<>();
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_dashboard, container, false);
+        View view = inflater.inflate(R.layout.fragment_dashboard, container, false);
         db = AppDatabase.getDatabase(requireContext());
 
-        pieChart = v.findViewById(R.id.todoPieChart);
-        tvStreakCountLabel = v.findViewById(R.id.tvStreakCountLabel);
+        pieChart = view.findViewById(R.id.todoPieChart);
+        tvStreakCountLabel = view.findViewById(R.id.tvStreakCountLabel);
+        rvMasterTasks = view.findViewById(R.id.rvMasterTasks);
 
-        RecyclerView rvMaster = v.findViewById(R.id.rvMasterTasks);
-        rvMaster.setLayoutManager(new LinearLayoutManager(getContext()));
-        masterAdapter = new MasterTaskAdapter();
-        rvMaster.setAdapter(masterAdapter);
-
-        loadDashboardMetrics();
-        evaluateDailyStreakCheckIn();
-        return v;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        loadDashboardMetrics();
-        refreshStreakDisplay();
-    }
-
-    private void refreshStreakDisplay() {
-        if (tvStreakCountLabel == null) return;
-        SharedPreferences prefs = requireContext().getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
-        int currentStreak = prefs.getInt("user_streak_count", 1);
-        tvStreakCountLabel.setText(String.format(Locale.getDefault(), "🔥 Current Streak: %d Days", currentStreak));
-    }
-
-    private void evaluateDailyStreakCheckIn() {
-        SharedPreferences prefs = requireContext().getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        String todayString = sdf.format(new Date());
-        String lastCheckInDate = prefs.getString("last_checkin_date", "");
-
-        if (todayString.equals(lastCheckInDate)) {
-            refreshStreakDisplay();
-            return;
+        if (rvMasterTasks != null) {
+            rvMasterTasks.setLayoutManager(new LinearLayoutManager(getContext()));
+            listAdapter = new DashboardListAdapter();
+            rvMasterTasks.setAdapter(listAdapter);
         }
 
-        int currentStreak = prefs.getInt("user_streak_count", 0);
-        try {
-            if (!lastCheckInDate.isEmpty()) {
-                Calendar todayCal = Calendar.getInstance();
-                Calendar prevCal = Calendar.getInstance();
-                prevCal.setTime(sdf.parse(lastCheckInDate));
-                prevCal.add(Calendar.DAY_OF_YEAR, 1);
-
-                String expectedStreakDay = sdf.format(prevCal.getTime());
-                if (todayString.equals(expectedStreakDay)) {
-                    currentStreak++;
-                } else {
-                    currentStreak = 1;
-                }
-            } else {
-                currentStreak = 1;
-            }
-        } catch (Exception e) {
-            currentStreak = 1;
-        }
-
-        final int verifiedStreakValue = currentStreak;
-
-        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_daily_checkin, null);
-        AlertDialog dialog = new AlertDialog.Builder(getContext()).create();
-        dialog.setView(dialogView);
-
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
-
-        TextView tvSubtitle = dialogView.findViewById(R.id.tvCheckInSubtitle);
-        tvSubtitle.setText(String.format(Locale.getDefault(), "Welcome back! You are on a %d day streak!", verifiedStreakValue));
-
-        dialogView.findViewById(R.id.btnCheckInConfirm).setOnClickListener(v -> {
-            prefs.edit()
-                    .putString("last_checkin_date", todayString)
-                    .putInt("user_streak_count", verifiedStreakValue)
-                    .apply();
-
-            refreshStreakDisplay();
-            dialog.dismiss();
-        });
-
-        dialog.setCancelable(false);
-        dialog.show();
+        loadOverviewAnalyticsData();
+        return view;
     }
 
-    private void loadDashboardMetrics() {
-        int previousSize = masterTaskList.size();
-        masterTaskList.clear();
-        masterTaskList.addAll(db.appDao().getAllTasks());
-        masterAdapter.notifyItemRangeChanged(0, Math.max(previousSize, masterTaskList.size()));
+    private void loadOverviewAnalyticsData() {
+        // Fetch values from Room DB
+        routineDatasetList.clear();
+        routineDatasetList.addAll(db.appDao().getAllTasks());
+        if (listAdapter != null) {
+            listAdapter.notifyDataSetChanged();
+        }
 
-        int totalItems = db.appDao().getTotalSubTaskCount();
-        int completedItems = db.appDao().getCheckedSubTaskCount();
-        int incompleteItems = totalItems - completedItems;
+        // Calculate chart totals
+        int totalSubtasks = db.appDao().getTotalSubTaskCount();
+        int completedSubtasks = db.appDao().getCheckedSubTaskCount();
+        int incompleteSubtasks = totalSubtasks - completedSubtasks;
 
-        if (totalItems == 0) {
-            incompleteItems = 1;
+        if (totalSubtasks == 0) {
+            incompleteSubtasks = 1; // Fallback placeholder slice
         }
 
         ArrayList<PieEntry> entries = new ArrayList<>();
-        entries.add(new PieEntry((float) completedItems, "COMPLETED"));
-        entries.add(new PieEntry((float) incompleteItems, "INCOMPLETE"));
+        entries.add(new PieEntry((float) completedSubtasks, "COMPLETED"));
+        entries.add(new PieEntry((float) incompleteSubtasks, "INCOMPLETE"));
 
         PieDataSet dataSet = new PieDataSet(entries, "");
         ArrayList<Integer> customColors = new ArrayList<>();
-        customColors.add(Color.parseColor("#81B29A"));
-        customColors.add(Color.parseColor("#E07A5F"));
+        customColors.add(Color.parseColor("#81B29A")); // Green
+        customColors.add(Color.parseColor("#E07A5F")); // Red/Orange
         dataSet.setColors(customColors);
 
         dataSet.setValueTextSize(13f);
         dataSet.setValueTextColor(Color.WHITE);
 
         PieData data = new PieData(dataSet);
-        pieChart.setData(data);
-
-        pieChart.getDescription().setEnabled(false);
-        pieChart.getLegend().setTextColor(Color.parseColor("#3D405B"));
-        pieChart.setUsePercentValues(true);
-        pieChart.setEntryLabelColor(Color.TRANSPARENT);
-        pieChart.setHoleRadius(0f);
-        pieChart.setTransparentCircleRadius(0f);
-
-        pieChart.animateY(1200);
-        pieChart.invalidate();
+        if (pieChart != null) {
+            pieChart.setData(data);
+            pieChart.getDescription().setEnabled(false);
+            pieChart.getLegend().setTextColor(Color.parseColor("#3D405B"));
+            pieChart.setUsePercentValues(true);
+            pieChart.setEntryLabelColor(Color.TRANSPARENT);
+            pieChart.setHoleRadius(0f);
+            pieChart.setTransparentCircleRadius(0f);
+            pieChart.animateY(1000);
+            pieChart.invalidate();
+        }
     }
 
-    private class MasterTaskAdapter extends RecyclerView.Adapter<MasterTaskAdapter.MasterViewHolder> {
+    // =======================================================
+    // ADAPTER: OVERVIEW LIST ROWS FOR DASHBOARD
+    // =======================================================
+    private class DashboardListAdapter extends RecyclerView.Adapter<DashboardListAdapter.DashboardViewHolder> {
         @NonNull
         @Override
-        public MasterViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        public DashboardViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View rv = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_task_row, parent, false);
-            return new MasterViewHolder(rv);
+            return new DashboardViewHolder(rv);
         }
 
         @Override
-        public void onBindViewHolder(@NonNull MasterViewHolder holder, int pos) {
-            TaskItem task = masterTaskList.get(pos);
+        public void onBindViewHolder(@NonNull DashboardViewHolder holder, int pos) {
+            TaskItem task = routineDatasetList.get(pos);
             holder.tvTitle.setText(task.title);
             holder.tvDate.setText(task.dateCreated);
 
             List<SubTaskItem> subTasks = db.appDao().getSubTasksForParent(task.taskId);
-            int totalSubTasks = subTasks.size();
-            int completedSubTasks = 0;
+            int totalSub = subTasks.size();
+            int completedSub = 0;
 
             for (SubTaskItem sub : subTasks) {
-                if (sub.isChecked) {
-                    completedSubTasks++;
-                }
+                if (sub.isChecked) completedSub++;
             }
 
             int itemProgressPercent = 0;
-            if (totalSubTasks > 0) {
-                itemProgressPercent = (completedSubTasks * 100) / totalSubTasks;
+            if (totalSub > 0) {
+                itemProgressPercent = (completedSub * 100) / totalSub;
             }
 
-            holder.tvItemPercent.setText(String.format(Locale.getDefault(), "%d%%", itemProgressPercent));
-            holder.pbItemMeter.setProgress(itemProgressPercent);
+            holder.tvPercent.setText(String.format(Locale.getDefault(), "%d%%", itemProgressPercent));
+            holder.pbMeter.setProgress(itemProgressPercent);
 
-            holder.ivDelete.setOnClickListener(view -> {
-                int indexPosition = holder.getBindingAdapterPosition();
-                if (indexPosition != RecyclerView.NO_POSITION) {
-                    db.appDao().deleteTask(task);
-                    masterTaskList.remove(indexPosition);
-                    notifyItemRemoved(indexPosition);
-                    loadDashboardMetrics();
-                }
-            });
+            // Hide row deletion widget inside main overview dashboard page
+            holder.ivDeleteRow.setVisibility(View.GONE);
         }
 
-        @Override
-        public int getItemCount() { return masterTaskList.size(); }
+        @Override public int getItemCount() { return routineDatasetList.size(); }
 
-        class MasterViewHolder extends RecyclerView.ViewHolder {
-            TextView tvTitle, tvDate, tvItemPercent;
-            ImageView ivDelete;
-            ProgressBar pbItemMeter;
+        class DashboardViewHolder extends RecyclerView.ViewHolder {
+            TextView tvTitle, tvDate, tvPercent;
+            android.widget.ProgressBar pbMeter;
+            ImageView ivDeleteRow;
 
-            public MasterViewHolder(@NonNull View itemView) {
+            public DashboardViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvTitle = itemView.findViewById(R.id.tvTaskRowTitle);
                 tvDate = itemView.findViewById(R.id.tvTaskRowDate);
-                ivDelete = itemView.findViewById(R.id.ivTaskRowDelete);
-                pbItemMeter = itemView.findViewById(R.id.pbRowTaskMeter);
-                tvItemPercent = itemView.findViewById(R.id.tvRowTaskPercentage);
+                tvPercent = itemView.findViewById(R.id.tvRowTaskPercentage);
+                pbMeter = itemView.findViewById(R.id.pbRowTaskMeter);
+                ivDeleteRow = itemView.findViewById(R.id.ivTaskRowDelete);
             }
         }
     }

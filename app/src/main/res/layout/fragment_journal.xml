@@ -1,136 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:tools="http://tools.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FAF9F6"
+    android:background="@color/bg_cream"
     android:padding="16dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/panelJournalListView"
+    <ImageView
+        android:id="@+id/ivJournalProfileAvatar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@android:drawable/ic_menu_myplaces"
+        app:tint="@color/text_dark"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:contentDescription="Profile Avatar" />
+
+    <TextView
+        android:id="@+id/tvJournalHeaderTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="Journal"
+        android:textColor="@color/text_dark"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="@id/ivJournalProfileAvatar"
+        app:layout_constraintBottom_toBottomOf="@id/ivJournalProfileAvatar"
+        app:layout_constraintStart_toEndOf="@id/ivJournalProfileAvatar"
+        tools:ignore="HardcodedText" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvJournalEntries"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="visible">
+        android:layout_height="0dp"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/ivJournalProfileAvatar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <LinearLayout
-            android:id="@+id/layoutJournalHeader"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_edit"
-                android:contentDescription="Journal Icon"
-                app:tint="#3D405B"
-                android:layout_marginEnd="8dp"
-                tools:ignore="HardcodedText" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Journal"
-                android:textStyle="bold"
-                android:textSize="20sp"
-                android:textColor="#3D405B"
-                tools:ignore="HardcodedText" />
-        </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvJournal"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@id/layoutJournalHeader"
-            app:layout_constraintBottom_toBottomOf="parent" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabAddJournal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_input_add"
-            android:contentDescription="Add Journal Entry"
-            android:backgroundTint="#8B7E74"
-            app:tint="@android:color/white"
-            android:layout_margin="16dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:ignore="HardcodedText" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/panelJournalEditWorkspace"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-        android:background="@android:color/white"
-        android:clickable="true"
-        android:focusable="true">
-
-        <RelativeLayout
-            android:id="@+id/layoutEditorToolbar"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:paddingHorizontal="4dp"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <ImageButton
-                android:id="@+id/btnWorkspaceBack"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@android:drawable/ic_menu_revert"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Back"
-                app:tint="#3D405B"
-                android:layout_centerVertical="true"
-                tools:ignore="HardcodedText" />
-
-            <ImageButton
-                android:id="@+id/btnWorkspaceSave"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@android:drawable/ic_menu_save"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Save"
-                app:tint="#3D405B"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                tools:ignore="HardcodedText" />
-        </RelativeLayout>
-
-        <EditText
-            android:id="@+id/etJournalTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Title"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="#3D405B"
-            android:padding="16dp"
-            android:background="@android:color/transparent"
-            android:importantForAutofill="no"
-            android:inputType="textCapSentences"
-            app:layout_constraintTop_toBottomOf="@id/layoutEditorToolbar" />
-
-        <EditText
-            android:id="@+id/etJournalContent"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:hint="Start writing your thoughts here..."
-            android:textSize="16sp"
-            android:textColor="#3D405B"
-            android:paddingHorizontal="16dp"
-            android:background="@android:color/transparent"
-            android:gravity="top"
-            android:importantForAutofill="no"
-            android:inputType="textMultiLine|textCapSentences"
-            app:layout_constraintTop_toBottomOf="@id/etJournalTitle"
-            app:layout_constraintBottom_toBottomOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddJournalEntry"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/ic_input_add"
+        android:backgroundTint="@color/accent_brown"
+        app:tint="@android:color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="Add Entry" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

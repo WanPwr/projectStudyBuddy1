@@ -1,6 +1,6 @@
 package com.example.projectstudybuddy1;
 
-import android.graphics.Color;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.LayoutInflater;
@@ -17,119 +17,114 @@ import java.util.Locale;
 public class TimerFragment extends Fragment {
 
     private enum TimeUnit { HOUR, MINUTE, SECOND }
-    private TimeUnit activeSelectedUnit = TimeUnit.MINUTE;
 
-    private TextView tvUpperHint, tvLowerHint, tvActiveUnitLabel;
     private TextView tvEditHours, tvEditMinutes, tvEditSeconds;
-    private Button btnToggleAction;
+    private TextView tvUpperHint, tvLowerHint, tvActiveUnitLabel;
+    private Button btnStepMinus, btnStepPlus, btnToggleAction, btnRestart;
+    private Button btn5Min, btn10Min, btn30Min, btn45Min;
 
-    private CountDownTimer countDownTimer;
-    private long totalTimeInMillis = 300000;
-    private long timeRemainingInMillis = 300000;
+    private TimeUnit activeSelectedUnit = TimeUnit.MINUTE;
+    private CountDownTimer countDownTimer = null;
+
+    private long initialSetTimeMillis = 300000L; // Caches original setup value benchmark
+    private long totalTimerMillis = 300000L;    // Operational timer countdown tracker
     private boolean isTimerRunning = false;
+    private boolean isTimerPaused = false;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_timer, container, false);
+        View view = inflater.inflate(R.layout.fragment_timer, container, false);
 
-        // Bind layout views
-        tvUpperHint = v.findViewById(R.id.tvTimerUpperHint);
-        tvLowerHint = v.findViewById(R.id.tvTimerLowerHint);
-        tvActiveUnitLabel = v.findViewById(R.id.tvActiveUnitLabel);
+        // UI View Binding Targets
+        tvEditHours = view.findViewById(R.id.tvEditHours);
+        tvEditMinutes = view.findViewById(R.id.tvEditMinutes);
+        tvEditSeconds = view.findViewById(R.id.tvEditSeconds);
+        tvUpperHint = view.findViewById(R.id.tvTimerUpperHint);
+        tvLowerHint = view.findViewById(R.id.tvTimerLowerHint);
+        tvActiveUnitLabel = view.findViewById(R.id.tvActiveUnitLabel);
 
-        tvEditHours = v.findViewById(R.id.tvEditHours);
-        tvEditMinutes = v.findViewById(R.id.tvEditMinutes);
-        tvEditSeconds = v.findViewById(R.id.tvEditSeconds);
+        btnStepMinus = view.findViewById(R.id.btnTimerStepMinus);
+        btnStepPlus = view.findViewById(R.id.btnTimerStepPlus);
+        btnToggleAction = view.findViewById(R.id.btnTimerToggleAction);
+        btnRestart = view.findViewById(R.id.btnTimerRestart);
 
-        // FIX: Points to btnTimerToggleAction matching the XML definition id layout parameters
-        btnToggleAction = v.findViewById(R.id.btnTimerToggleAction);
+        btn5Min = view.findViewById(R.id.btnPreset5Min);
+        btn10Min = view.findViewById(R.id.btnPreset10Min);
+        btn30Min = view.findViewById(R.id.btnPreset30Min);
+        btn45Min = view.findViewById(R.id.btnPreset45Min);
 
-        Button btnMinus = v.findViewById(R.id.btnTimerStepMinus);
-        Button btnPlus = v.findViewById(R.id.btnTimerStepPlus);
+        setupClickListeners();
 
-        // Unit click listeners
-        tvEditHours.setOnClickListener(view -> updateActiveEditUnit(TimeUnit.HOUR));
-        tvEditMinutes.setOnClickListener(view -> updateActiveEditUnit(TimeUnit.MINUTE));
-        tvEditSeconds.setOnClickListener(view -> updateActiveEditUnit(TimeUnit.SECOND));
+        totalTimerMillis = initialSetTimeMillis;
+        refreshTimerInterfaceStrings(totalTimerMillis);
 
-        // Step buttons
-        btnMinus.setOnClickListener(view -> performUnitStepTweak(false));
-        btnPlus.setOnClickListener(view -> performUnitStepTweak(true));
+        return view;
+    }
 
-        // Core start/pause action trigger
-        btnToggleAction.setOnClickListener(view -> {
+    private void setupClickListeners() {
+        // Individual Column Time Selection Targets
+        tvEditHours.setOnClickListener(v -> changeActiveEditingUnit(TimeUnit.HOUR));
+        tvEditMinutes.setOnClickListener(v -> changeActiveEditingUnit(TimeUnit.MINUTE));
+        tvEditSeconds.setOnClickListener(v -> changeActiveEditingUnit(TimeUnit.SECOND));
+
+        // Step Increments
+        btnStepPlus.setOnClickListener(v -> adjustActiveUnit(1));
+        btnStepMinus.setOnClickListener(v -> adjustActiveUnit(-1));
+
+        // Fast Preset Macros
+        btn5Min.setOnClickListener(v -> applyPresetTime(300000L));
+        btn10Min.setOnClickListener(v -> applyPresetTime(600000L));
+        btn30Min.setOnClickListener(v -> applyPresetTime(1800000L));
+        btn45Min.setOnClickListener(v -> applyPresetTime(2700000L));
+
+        // Secondary Independent Restart Button Click Action
+        btnRestart.setOnClickListener(v -> resetToLastConfiguredTime());
+
+        // Core Primary State Toggle Driver
+        btnToggleAction.setOnClickListener(v -> {
             if (isTimerRunning) {
-                pauseCountDownEngine();
+                pauseChronometerTimer();
             } else {
-                startCountDownEngine();
+                startChronometerTimer();
             }
         });
-
-        // Quick presets
-        v.findViewById(R.id.btnPreset5Min).setOnClickListener(view -> updateTimerDurationBudget(300000));
-        v.findViewById(R.id.btnPreset10Min).setOnClickListener(view -> updateTimerDurationBudget(600000));
-        v.findViewById(R.id.btnPreset30Min).setOnClickListener(view -> updateTimerDurationBudget(1800000));
-        v.findViewById(R.id.btnPreset45Min).setOnClickListener(view -> updateTimerDurationBudget(2700000));
-
-        updateTimerDurationBudget(totalTimeInMillis);
-        updateActiveEditUnit(TimeUnit.MINUTE);
-
-        return v;
     }
 
-    @SuppressWarnings("AndroidLintHardcodedText")
-    private void updateActiveEditUnit(TimeUnit unit) {
+    private void changeActiveEditingUnit(TimeUnit unit) {
         if (isTimerRunning) return;
         activeSelectedUnit = unit;
-
-        tvEditHours.setTextColor(Color.parseColor("#8E8E93"));
-        tvEditMinutes.setTextColor(Color.parseColor("#8E8E93"));
-        tvEditSeconds.setTextColor(Color.parseColor("#8E8E93"));
-
-        switch (unit) {
-            case HOUR:
-                tvEditHours.setTextColor(Color.BLACK);
-                tvActiveUnitLabel.setText("Editing: HOURS");
-                break;
-            case MINUTE:
-                tvEditMinutes.setTextColor(Color.BLACK);
-                tvActiveUnitLabel.setText("Editing: MINUTES");
-                break;
-            case SECOND:
-                tvEditSeconds.setTextColor(Color.BLACK);
-                tvActiveUnitLabel.setText("Editing: SECONDS");
-                break;
-        }
+        tvActiveUnitLabel.setText("Editing: " + unit.name());
+        refreshTimerInterfaceStrings(totalTimerMillis);
     }
 
-    private void performUnitStepTweak(boolean isIncrement) {
+    private void adjustActiveUnit(int amount) {
         if (isTimerRunning) return;
 
-        long factor = isIncrement ? 1L : -1L;
-        long deltaMillis = 0;
+        long stepDelta = 60000L;
+        if (activeSelectedUnit == TimeUnit.HOUR) stepDelta = 3600000L;
+        if (activeSelectedUnit == TimeUnit.SECOND) stepDelta = 1000L;
 
-        switch (activeSelectedUnit) {
-            case HOUR:
-                deltaMillis = factor * 3600000L;
-                break;
-            case MINUTE:
-                deltaMillis = factor * 60000L;
-                break;
-            case SECOND:
-                deltaMillis = factor * 1000L;
-                break;
-        }
+        totalTimerMillis += (stepDelta * amount);
+        if (totalTimerMillis < 0) totalTimerMillis = 0;
 
-        long tentativeTime = totalTimeInMillis + deltaMillis;
-        if (tentativeTime < 0) tentativeTime = 0;
-        updateTimerDurationBudget(tentativeTime);
+        initialSetTimeMillis = totalTimerMillis;
+        resetControlStateViews();
     }
 
-    private void updateTimerDurationBudget(long durationMillis) {
-        totalTimeInMillis = durationMillis;
-        timeRemainingInMillis = durationMillis;
-        refreshTimerInterfaceStrings(durationMillis);
+    private void applyPresetTime(long timeMillis) {
+        if (isTimerRunning) return;
+        totalTimerMillis = timeMillis;
+        initialSetTimeMillis = timeMillis;
+        resetControlStateViews();
+    }
+
+    private void resetControlStateViews() {
+        isTimerPaused = false;
+        btnRestart.setVisibility(View.GONE);
+        btnToggleAction.setText("▶ Start");
+        btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF81B29A)); // Guaranteed green state configuration
+        refreshTimerInterfaceStrings(totalTimerMillis);
     }
 
     private void refreshTimerInterfaceStrings(long workingMillis) {
@@ -141,63 +136,118 @@ public class TimerFragment extends Fragment {
         tvEditMinutes.setText(String.format(Locale.getDefault(), "%02d", minutes));
         tvEditSeconds.setText(String.format(Locale.getDefault(), "%02d", seconds));
 
-        long upperOffset = workingMillis + 61000;
+        long unitOffset = 60000L;
+        if (activeSelectedUnit == TimeUnit.HOUR) unitOffset = 3600000L;
+        else if (activeSelectedUnit == TimeUnit.SECOND) unitOffset = 1000L;
+
+        long upperOffset = workingMillis + unitOffset;
         int uH = (int) (upperOffset / 3600000);
         int uM = (int) ((upperOffset % 3600000) / 60000);
         int uS = (int) ((upperOffset % 60000) / 1000);
         tvUpperHint.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", uH, uM, uS));
 
-        long lowerOffset = workingMillis - 61000;
-        if (lowerOffset < 0) lowerOffset = 86399000;
+        long lowerOffset = workingMillis - unitOffset;
+        if (lowerOffset < 0) lowerOffset = 0;
         int lH = (int) (lowerOffset / 3600000);
         int lM = (int) ((lowerOffset % 3600000) / 60000);
         int lS = (int) ((lowerOffset % 60000) / 1000);
         tvLowerHint.setText(String.format(Locale.getDefault(), "%02d:%02d:%02d", lH, lM, lS));
     }
 
-    @SuppressWarnings("AndroidLintHardcodedText")
-    private void startCountDownEngine() {
-        if (timeRemainingInMillis <= 0) {
-            Toast.makeText(getContext(), "Please set a duration first!", Toast.LENGTH_SHORT).show();
+    private void startChronometerTimer() {
+        // FIXED: Throws an interactive toast validation error if the user attempts to run an empty 00:00:00 timer
+        if (totalTimerMillis <= 0) {
+            Toast.makeText(getContext(), "Please set a valid time first!", Toast.LENGTH_SHORT).show();
             return;
         }
 
         isTimerRunning = true;
-        btnToggleAction.setText("⏸ Pause");
-        btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#E07A5F")));
+        isTimerPaused = false;
 
-        tvEditHours.setTextColor(Color.BLACK);
-        tvEditMinutes.setTextColor(Color.BLACK);
-        tvEditSeconds.setTextColor(Color.BLACK);
+        btnRestart.setVisibility(View.GONE); // Clear side layout parameters
+        btnToggleAction.setText("❚❚ Pause");
+        btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE07A5F)); // Orange running state color tone
 
-        countDownTimer = new CountDownTimer(timeRemainingInMillis, 1000) {
+        // Completely hide grayed-out hints when countdown initializes
+        tvUpperHint.setVisibility(View.INVISIBLE);
+        tvLowerHint.setVisibility(View.INVISIBLE);
+
+        countDownTimer = new CountDownTimer(totalTimerMillis, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
-                timeRemainingInMillis = millisUntilFinished;
-                refreshTimerInterfaceStrings(millisUntilFinished);
+                totalTimerMillis = millisUntilFinished;
+                refreshTimerInterfaceStrings(totalTimerMillis);
             }
 
             @Override
             public void onFinish() {
                 isTimerRunning = false;
-                updateTimerDurationBudget(totalTimeInMillis);
+                isTimerPaused = false;
+
+                // FIXED: Retains the original duration value configuration inside display arrays upon completion
+                totalTimerMillis = initialSetTimeMillis;
+                refreshTimerInterfaceStrings(totalTimerMillis);
+
+                btnRestart.setVisibility(View.GONE);
                 btnToggleAction.setText("▶ Start");
-                btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#007AFF")));
-                updateActiveEditUnit(activeSelectedUnit);
-                Toast.makeText(getContext(), "Time is up!", Toast.LENGTH_LONG).show();
+                btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF81B29A));
+
+                tvUpperHint.setVisibility(View.VISIBLE);
+                tvLowerHint.setVisibility(View.VISIBLE);
+
+                // Safe Native Alarm Track Ringtone Driver
+                try {
+                    android.net.Uri alertSoundUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM);
+                    if (alertSoundUri == null) {
+                        alertSoundUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION);
+                    }
+                    android.media.Ringtone ringtoneEngine = android.media.RingtoneManager.getRingtone(getContext(), alertSoundUri);
+                    if (ringtoneEngine != null) {
+                        ringtoneEngine.play();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                if (getContext() != null) {
+                    Intent intent = new Intent(getContext(), TimerEndedActivity.class);
+                    startActivity(intent);
+                }
             }
         }.start();
     }
 
-    @SuppressWarnings("AndroidLintHardcodedText")
-    private void pauseCountDownEngine() {
+    private void pauseChronometerTimer() {
         if (countDownTimer != null) {
             countDownTimer.cancel();
         }
         isTimerRunning = false;
+        isTimerPaused = true;
+
+        // SPLIT SCREEN SEPARATION CONTROL HOOKS ENFORCED
+        btnRestart.setVisibility(View.VISIBLE);
+        btnToggleAction.setText("▶ Resume");
+        btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF81B29A));
+
+        // Re-reveal standard hints tracking metrics
+        tvUpperHint.setVisibility(View.VISIBLE);
+        tvLowerHint.setVisibility(View.VISIBLE);
+    }
+
+    private void resetToLastConfiguredTime() {
+        if (countDownTimer != null) {
+            countDownTimer.cancel();
+        }
+        isTimerRunning = false;
+        isTimerPaused = false;
+
+        // Restores metrics back to user cached initial choice parameter reference benchmarks
+        totalTimerMillis = initialSetTimeMillis;
+        btnRestart.setVisibility(View.GONE);
         btnToggleAction.setText("▶ Start");
-        btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#007AFF")));
-        updateActiveEditUnit(activeSelectedUnit);
+        btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF81B29A));
+
+        refreshTimerInterfaceStrings(totalTimerMillis);
     }
 
     @Override

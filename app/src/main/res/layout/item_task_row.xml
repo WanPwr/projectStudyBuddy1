@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginVertical="6dp"
@@ -14,8 +15,9 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_journal_card_outline"
-        android:padding="16dp">
+        android:background="@android:drawable/editbox_background"
+        android:padding="16dp"
+        tools:ignore="UnusedAttribute">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -29,8 +31,9 @@
                 android:layout_height="wrap_content"
                 android:text="26/06/26 12:04"
                 android:textSize="11sp"
-                android:textColor="@android:color/darker_gray"
-                android:layout_marginBottom="4dp" />
+                android:textColor="@color/text_hint_darker"
+                android:layout_marginBottom="4dp"
+                tools:ignore="HardcodedText" />
 
             <TextView
                 android:id="@+id/tvTaskRowTitle"
@@ -39,7 +42,8 @@
                 android:text="Task Title Placeholder"
                 android:textStyle="bold"
                 android:textSize="15sp"
-                android:textColor="#3D405B" />
+                android:textColor="#3D405B"
+                tools:ignore="HardcodedText" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -58,7 +62,8 @@
                     android:progress="0"
                     android:progressDrawable="@android:drawable/progress_horizontal"
                     android:progressTint="@color/accent_orange"
-                    android:progressBackgroundTint="#E0E0E0"/>
+                    android:progressBackgroundTint="#E0E0E0"
+                    tools:ignore="UnusedAttribute" />
 
                 <TextView
                     android:id="@+id/tvRowTaskPercentage"
@@ -68,7 +73,8 @@
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:textColor="@color/accent_orange"
-                    android:layout_marginStart="8dp"/>
+                    android:layout_marginStart="8dp"
+                    tools:ignore="HardcodedText" />
             </LinearLayout>
         </LinearLayout>
 
@@ -77,10 +83,11 @@
             android:layout_width="22dp"
             android:layout_height="22dp"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:contentDescription="Remove checklist record entry"
+            android:contentDescription="Delete"
             app:tint="#D97A53"
             android:layout_marginStart="12dp"
             android:clickable="true"
-            android:focusable="true" />
+            android:focusable="true"
+            tools:ignore="HardcodedText" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>
