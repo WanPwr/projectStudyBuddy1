@@ -7,282 +7,229 @@
     android:background="@color/bg_cream"
     android:padding="16dp">
 
-    <ImageView
-        android:id="@+id/ivTimerUserAvatar"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:src="@android:drawable/ic_menu_myplaces"
-        android:contentDescription="User profile icon"
-        app:tint="#3D405B"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:ignore="HardcodedText" />
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardSelectionIndicator"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        app:cardCornerRadius="8dp"
-        app:cardElevation="0dp"
-        app:cardBackgroundColor="#EAE6DF"
-        app:layout_constraintTop_toBottomOf="@id/ivTimerUserAvatar"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-        <TextView
-            android:id="@+id/tvActiveUnitLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Editing: MINUTES"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="#3D405B"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            tools:ignore="HardcodedText" />
-    </androidx.cardview.widget.CardView>
-
-    <FrameLayout
-        android:id="@+id/layoutCircularDial"
-        android:layout_width="260dp"
-        android:layout_height="260dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_timer_circle_stroke"
-        app:layout_constraintTop_toBottomOf="@id/cardSelectionIndicator"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:padding="16dp">
-
-            <TextView
-                android:id="@+id/tvTimerUpperHint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="01:01:01"
-                android:textSize="26sp"
-                android:textColor="#EAE6DF"
-                android:fontFamily="monospace"
-                android:letterSpacing="0.05"
-                tools:ignore="HardcodedText" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="8dp">
-
-                <TextView
-                    android:id="@+id/tvEditHours"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="00"
-                    android:textSize="38sp"
-                    android:textStyle="bold"
-                    android:textColor="#000000"
-                    android:fontFamily="monospace"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=":"
-                    android:textSize="38sp"
-                    android:textStyle="bold"
-                    android:textColor="#000000"
-                    android:fontFamily="monospace"
-                    tools:ignore="HardcodedText" />
-
-                <TextView
-                    android:id="@+id/tvEditMinutes"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="05"
-                    android:textSize="38sp"
-                    android:textStyle="bold"
-                    android:textColor="#000000"
-                    android:fontFamily="monospace"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=":"
-                    android:textSize="38sp"
-                    android:textStyle="bold"
-                    android:textColor="#000000"
-                    android:fontFamily="monospace"
-                    tools:ignore="HardcodedText" />
-
-                <TextView
-                    android:id="@+id/tvEditSeconds"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="00"
-                    android:textSize="38sp"
-                    android:textStyle="bold"
-                    android:textColor="#000000"
-                    android:fontFamily="monospace"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"/>
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvTimerLowerHint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="59:59:59"
-                android:textSize="26sp"
-                android:textColor="#EAE6DF"
-                android:fontFamily="monospace"
-                android:letterSpacing="0.05"
-                tools:ignore="HardcodedText" />
-        </LinearLayout>
-    </FrameLayout>
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnTimerToggleAction"
-        android:layout_width="110dp"
-        android:layout_height="38dp"
-        android:layout_marginTop="16dp"
-        android:text="▶ Start"
-        android:textSize="13sp"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#007AFF"
-        android:insetTop="0dp"
-        android:insetBottom="0dp"
-        app:cornerRadius="18dp"
-        app:layout_constraintTop_toBottomOf="@id/layoutCircularDial"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        tools:ignore="HardcodedText" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnTimerStepMinus"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="54dp"
-        android:layout_height="54dp"
-        android:text="-"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:textColor="#000000"
-        android:insetTop="0dp"
-        android:insetBottom="0dp"
-        app:layout_constraintTop_toBottomOf="@id/btnTimerToggleAction"
-        app:layout_constraintStart_toStartOf="@id/layoutCircularDial"
-        tools:ignore="HardcodedText" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnTimerStepPlus"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="54dp"
-        android:layout_height="54dp"
-        android:text="+"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="#000000"
-        android:insetTop="0dp"
-        android:insetBottom="0dp"
-        app:layout_constraintTop_toBottomOf="@id/btnTimerToggleAction"
-        app:layout_constraintEnd_toEndOf="@id/layoutCircularDial"
-        tools:ignore="HardcodedText" />
-
-    <View
-        android:id="@+id/dividerPresetTop"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#D1D1D6"
-        android:layout_marginTop="20dp"
-        app:layout_constraintTop_toBottomOf="@id/btnTimerStepMinus" />
-
     <LinearLayout
-        android:id="@+id/layoutPresetGridContainer"
+        android:id="@+id/layoutDisplayContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingVertical="12dp"
-        app:layout_constraintTop_toBottomOf="@id/dividerPresetTop">
+        android:gravity="center"
+        android:layout_marginTop="32dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tvTimerUpperHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:06:00"
+            android:textColor="@color/text_hint_darker"
+            android:textSize="18sp"
+            tools:ignore="HardcodedText" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center"
-            android:layout_marginBottom="12dp">
+            android:layout_marginVertical="12dp">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPreset5Min"
-                android:layout_width="120dp"
-                android:layout_height="44dp"
-                android:text="00:05:00"
-                android:textColor="#000000"
-                android:backgroundTint="#D1D1D6"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                app:cornerRadius="12dp"
-                android:layout_marginEnd="16dp"
+            <TextView
+                android:id="@+id/tvEditHours"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:text="00"
+                android:textSize="54sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textColor="@color/text_dark"
                 tools:ignore="HardcodedText" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPreset10Min"
-                android:layout_width="120dp"
-                android:layout_height="44dp"
-                android:text="00:10:00"
-                android:textColor="#000000"
-                android:backgroundTint="#D1D1D6"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                app:cornerRadius="12dp"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=":"
+                android:textSize="54sp"
+                android:textColor="@color/text_hint_darker"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/tvEditMinutes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:text="05"
+                android:textSize="54sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textColor="@color/text_dark"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=":"
+                android:textSize="54sp"
+                android:textColor="@color/text_hint_darker"
+                tools:ignore="HardcodedText" />
+
+            <TextView
+                android:id="@+id/tvEditSeconds"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:text="00"
+                android:textSize="54sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:textColor="@color/text_dark"
                 tools:ignore="HardcodedText" />
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/tvTimerLowerHint"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPreset30Min"
-                android:layout_width="120dp"
-                android:layout_height="44dp"
-                android:text="00:30:00"
-                android:textColor="#000000"
-                android:backgroundTint="#D1D1D6"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                app:cornerRadius="12dp"
-                android:layout_marginEnd="16dp"
-                tools:ignore="HardcodedText" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnPreset45Min"
-                android:layout_width="120dp"
-                android:layout_height="44dp"
-                android:text="00:45:00"
-                android:textColor="#000000"
-                android:backgroundTint="#D1D1D6"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                app:cornerRadius="12dp"
-                tools:ignore="HardcodedText" />
-        </LinearLayout>
+            android:text="00:04:00"
+            android:textColor="@color/text_hint_darker"
+            android:textSize="18sp"
+            tools:ignore="HardcodedText" />
     </LinearLayout>
 
-    <View
+    <TextView
+        android:id="@+id/tvActiveUnitLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Editing: MINUTES"
+        android:textColor="@color/accent_brown"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layoutDisplayContainer"
+        tools:ignore="HardcodedText" />
+
+    <LinearLayout
+        android:id="@+id/layoutStepControllers"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvActiveUnitLabel">
+
+        <Button
+            android:id="@+id/btnTimerStepMinus"
+            android:layout_width="64dp"
+            android:layout_height="54dp"
+            android:text="-"
+            android:textSize="24sp"
+            android:backgroundTint="@color/divider_gray"
+            android:textColor="@color/text_dark"
+            android:layout_marginEnd="20dp"/>
+
+        <Button
+            android:id="@+id/btnTimerStepPlus"
+            android:layout_width="64dp"
+            android:layout_height="54dp"
+            android:text="+"
+            android:textSize="24sp"
+            android:backgroundTint="@color/divider_gray"
+            android:textColor="@color/text_dark"
+            android:layout_marginStart="20dp"/>
+    </LinearLayout>
+
+    <GridLayout
+        android:id="@+id/gridPresets"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#D1D1D6"
-        app:layout_constraintTop_toBottomOf="@id/layoutPresetGridContainer" />
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:rowCount="2"
+        android:layout_marginTop="32dp"
+        android:paddingHorizontal="16dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutStepControllers">
+
+        <Button
+            android:id="@+id/btnPreset5Min"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:text="5 Min"
+            android:backgroundTint="@color/card_white"
+            android:textColor="@color/text_dark"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnPreset10Min"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:text="10 Min"
+            android:backgroundTint="@color/card_white"
+            android:textColor="@color/text_dark"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnPreset30Min"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:text="30 Min"
+            android:backgroundTint="@color/card_white"
+            android:textColor="@color/text_dark"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnPreset45Min"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="6dp"
+            android:text="45 Min"
+            android:backgroundTint="@color/card_white"
+            android:textColor="@color/text_dark"
+            tools:ignore="HardcodedText" />
+    </GridLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutActionGroup"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:layout_marginHorizontal="22dp"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <Button
+            android:id="@+id/btnTimerRestart"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="🔄 Restart"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/accent_brown"
+            android:textColor="@android:color/white"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnTimerToggleAction"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="▶ Start"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="@color/accent_green"
+            android:textColor="@android:color/white"
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

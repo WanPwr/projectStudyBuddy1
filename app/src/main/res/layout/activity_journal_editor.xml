@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream"
+    android:padding="20dp">
+
+    <ImageButton
+        android:id="@+id/btnJournalEditorBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_revert"
+        app:tint="@color/accent_brown"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:contentDescription="Go Back" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabSaveJournalEntry"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@android:drawable/checkbox_on_background"
+        android:backgroundTint="@color/accent_brown"
+        app:tint="@android:color/white"
+        app:fabSize="mini"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="Save Entry" />
+
+    <EditText
+        android:id="@+id/etJournalEntryTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:hint="Title..."
+        android:textColorHint="@color/text_hint_darker"
+        android:textColor="@color/text_dark"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:background="@android:drawable/edit_text"
+        android:padding="12dp"
+        android:inputType="textCapWords"
+        android:importantForAutofill="no"
+        app:layout_constraintTop_toBottomOf="@id/btnJournalEditorBack" />
+
+    <EditText
+        android:id="@+id/etJournalEntryBody"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:hint="Type your thoughts here..."
+        android:textColorHint="@color/text_hint_darker"
+        android:textColor="@color/text_dark"
+        android:textSize="16sp"
+        android:gravity="top|start"
+        android:background="@android:drawable/edit_text"
+        android:padding="16dp"
+        android:inputType="textMultiLine|textCapSentences"
+        android:importantForAutofill="no"
+        app:layout_constraintTop_toBottomOf="@id/etJournalEntryTitle"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
