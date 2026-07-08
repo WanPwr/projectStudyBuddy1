@@ -1,5 +1,6 @@
 package com.example.projectstudybuddy1;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -26,8 +27,8 @@ public class TimerFragment extends Fragment {
     private TimeUnit activeSelectedUnit = TimeUnit.MINUTE;
     private CountDownTimer countDownTimer = null;
 
-    private long initialSetTimeMillis = 300000L; // Caches original setup value benchmark
-    private long totalTimerMillis = 300000L;    // Operational timer countdown tracker
+    private long initialSetTimeMillis = 300000L;
+    private long totalTimerMillis = 300000L;
     private boolean isTimerRunning = false;
     private boolean isTimerPaused = false;
 
@@ -36,7 +37,6 @@ public class TimerFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_timer, container, false);
 
-        // UI View Binding Targets
         tvEditHours = view.findViewById(R.id.tvEditHours);
         tvEditMinutes = view.findViewById(R.id.tvEditMinutes);
         tvEditSeconds = view.findViewById(R.id.tvEditSeconds);
@@ -63,25 +63,20 @@ public class TimerFragment extends Fragment {
     }
 
     private void setupClickListeners() {
-        // Individual Column Time Selection Targets
         tvEditHours.setOnClickListener(v -> changeActiveEditingUnit(TimeUnit.HOUR));
         tvEditMinutes.setOnClickListener(v -> changeActiveEditingUnit(TimeUnit.MINUTE));
         tvEditSeconds.setOnClickListener(v -> changeActiveEditingUnit(TimeUnit.SECOND));
 
-        // Step Increments
         btnStepPlus.setOnClickListener(v -> adjustActiveUnit(1));
         btnStepMinus.setOnClickListener(v -> adjustActiveUnit(-1));
 
-        // Fast Preset Macros
         btn5Min.setOnClickListener(v -> applyPresetTime(300000L));
         btn10Min.setOnClickListener(v -> applyPresetTime(600000L));
         btn30Min.setOnClickListener(v -> applyPresetTime(1800000L));
         btn45Min.setOnClickListener(v -> applyPresetTime(2700000L));
 
-        // Secondary Independent Restart Button Click Action
         btnRestart.setOnClickListener(v -> resetToLastConfiguredTime());
 
-        // Core Primary State Toggle Driver
         btnToggleAction.setOnClickListener(v -> {
             if (isTimerRunning) {
                 pauseChronometerTimer();
@@ -123,7 +118,7 @@ public class TimerFragment extends Fragment {
         isTimerPaused = false;
         btnRestart.setVisibility(View.GONE);
         btnToggleAction.setText("▶ Start");
-        btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF81B29A)); // Guaranteed green state configuration
+        btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF81B29A));
         refreshTimerInterfaceStrings(totalTimerMillis);
     }
 
@@ -155,7 +150,6 @@ public class TimerFragment extends Fragment {
     }
 
     private void startChronometerTimer() {
-        // FIXED: Throws an interactive toast validation error if the user attempts to run an empty 00:00:00 timer
         if (totalTimerMillis <= 0) {
             Toast.makeText(getContext(), "Please set a valid time first!", Toast.LENGTH_SHORT).show();
             return;
@@ -164,11 +158,10 @@ public class TimerFragment extends Fragment {
         isTimerRunning = true;
         isTimerPaused = false;
 
-        btnRestart.setVisibility(View.GONE); // Clear side layout parameters
+        btnRestart.setVisibility(View.GONE);
         btnToggleAction.setText("❚❚ Pause");
-        btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE07A5F)); // Orange running state color tone
+        btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE07A5F));
 
-        // Completely hide grayed-out hints when countdown initializes
         tvUpperHint.setVisibility(View.INVISIBLE);
         tvLowerHint.setVisibility(View.INVISIBLE);
 
@@ -181,38 +174,47 @@ public class TimerFragment extends Fragment {
 
             @Override
             public void onFinish() {
-                isTimerRunning = false;
-                isTimerPaused = false;
+                // FIXED CRASH: Structural Fragment context safety check layer
+                if (getActivity() == null || !isAdded()) return;
 
-                // FIXED: Retains the original duration value configuration inside display arrays upon completion
-                totalTimerMillis = initialSetTimeMillis;
-                refreshTimerInterfaceStrings(totalTimerMillis);
+                // Enforce all execution processes back onto the UI Main Loop Thread
+                getActivity().runOnUiThread(() -> {
+                    isTimerRunning = false;
+                    isTimerPaused = false;
 
-                btnRestart.setVisibility(View.GONE);
-                btnToggleAction.setText("▶ Start");
-                btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF81B29A));
+                    totalTimerMillis = initialSetTimeMillis;
+                    refreshTimerInterfaceStrings(totalTimerMillis);
 
-                tvUpperHint.setVisibility(View.VISIBLE);
-                tvLowerHint.setVisibility(View.VISIBLE);
+                    btnRestart.setVisibility(View.GONE);
+                    btnToggleAction.setText("▶ Start");
+                    btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF81B29A));
 
-                // Safe Native Alarm Track Ringtone Driver
-                try {
-                    android.net.Uri alertSoundUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM);
-                    if (alertSoundUri == null) {
-                        alertSoundUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION);
+                    tvUpperHint.setVisibility(View.VISIBLE);
+                    tvLowerHint.setVisibility(View.VISIBLE);
+
+                    // Safe Alarm Ringtone Player
+                    try {
+                        Context safeContext = requireContext();
+                        android.net.Uri alertSoundUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM);
+                        if (alertSoundUri == null) {
+                            alertSoundUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION);
+                        }
+                        android.media.Ringtone ringtoneEngine = android.media.RingtoneManager.getRingtone(safeContext, alertSoundUri);
+                        if (ringtoneEngine != null) {
+                            ringtoneEngine.play();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                    android.media.Ringtone ringtoneEngine = android.media.RingtoneManager.getRingtone(getContext(), alertSoundUri);
-                    if (ringtoneEngine != null) {
-                        ringtoneEngine.play();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
 
-                if (getContext() != null) {
-                    Intent intent = new Intent(getContext(), TimerEndedActivity.class);
-                    startActivity(intent);
-                }
+                    // Safe Intent Activity Switch
+                    try {
+                        Intent intent = new Intent(requireContext(), TimerEndedActivity.class);
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
             }
         }.start();
     }
@@ -224,12 +226,10 @@ public class TimerFragment extends Fragment {
         isTimerRunning = false;
         isTimerPaused = true;
 
-        // SPLIT SCREEN SEPARATION CONTROL HOOKS ENFORCED
         btnRestart.setVisibility(View.VISIBLE);
         btnToggleAction.setText("▶ Resume");
         btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF81B29A));
 
-        // Re-reveal standard hints tracking metrics
         tvUpperHint.setVisibility(View.VISIBLE);
         tvLowerHint.setVisibility(View.VISIBLE);
     }
@@ -241,7 +241,6 @@ public class TimerFragment extends Fragment {
         isTimerRunning = false;
         isTimerPaused = false;
 
-        // Restores metrics back to user cached initial choice parameter reference benchmarks
         totalTimerMillis = initialSetTimeMillis;
         btnRestart.setVisibility(View.GONE);
         btnToggleAction.setText("▶ Start");

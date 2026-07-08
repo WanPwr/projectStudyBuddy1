@@ -32,7 +32,7 @@
 
     <EditText
         android:id="@+id/etJournalEntryTitle"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:hint="Title..."
@@ -44,14 +44,15 @@
         android:padding="12dp"
         android:inputType="textCapWords"
         android:importantForAutofill="no"
-        app:layout_constraintTop_toBottomOf="@id/btnJournalEditorBack" />
+        app:layout_constraintTop_toBottomOf="@id/btnJournalEditorBack"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <EditText
         android:id="@+id/etJournalEntryBody"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
         android:hint="Type your thoughts here..."
         android:textColorHint="@color/text_hint_darker"
         android:textColor="@color/text_dark"
@@ -62,6 +63,8 @@
         android:inputType="textMultiLine|textCapSentences"
         android:importantForAutofill="no"
         app:layout_constraintTop_toBottomOf="@id/etJournalEntryTitle"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

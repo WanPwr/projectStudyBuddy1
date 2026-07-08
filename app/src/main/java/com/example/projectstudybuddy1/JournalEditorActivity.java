@@ -1,5 +1,7 @@
 package com.example.projectstudybuddy1;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -19,14 +21,16 @@ public class JournalEditorActivity extends AppCompatActivity {
     private EditText etTitle, etBody;
     private TaskItem activeEntry;
     private boolean isEditMode = false;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_journal_editor);
-        db = AppDatabase.getDatabase(this);
 
-        // Bind layout views
+        db = AppDatabase.getDatabase(this);
+        prefs = getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
+
         etTitle = findViewById(R.id.etJournalEntryTitle);
         etBody = findViewById(R.id.etJournalEntryBody);
         ImageButton btnBack = findViewById(R.id.btnJournalEditorBack);
@@ -35,64 +39,63 @@ public class JournalEditorActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
         fabSave.setOnClickListener(v -> saveJournalWorkspaceData());
 
-        // Check if loading an existing entry or creating a new one
         int existingId = getIntent().getIntExtra("JOURNAL_ID", -1);
+        int activeUserId = prefs.getInt("userId", 1);
+
         if (existingId != -1) {
             isEditMode = true;
-            new Thread(() -> {
-                List<TaskItem> entries = db.appDao().getAllTasks();
-                for (TaskItem item : entries) {
-                    if (item.taskId == existingId) {
-                        activeEntry = item;
-                        runOnUiThread(() -> {
-                            // Clean display: Strip out the internal hidden tracking prefix when showing it to the user
-                            if (activeEntry.title != null) {
-                                String cleanTitle = activeEntry.title
-                                        .replace("Journal: ", "")
-                                        .replaceAll("^Journal\\s\\d+$", "");
-                                etTitle.setText(cleanTitle.trim());
+            List<TaskItem> entries = db.appDao().getAllTasks(activeUserId);
+            for (TaskItem item : entries) {
+                if (item.taskId == existingId) {
+                    activeEntry = item;
+                    if (activeEntry.title != null) {
+                        String rawTitleClean = activeEntry.title.replace("JOURNAL_NOTE:", "").trim();
+
+                        // RESTORE SPLIT FIELDS: Decouple title versus body text input structures safely
+                        if (rawTitleClean.contains("||CONTENT_SEP||")) {
+                            String[] segments = rawTitleClean.split("\\|\\|CONTENT_SEP\\|\\|");
+                            etTitle.setText(segments[0].trim());
+                            if (segments.length > 1) {
+                                etBody.setText(segments[1].trim());
                             }
-                        });
-                        break;
+                        } else {
+                            etTitle.setText(rawTitleClean);
+                            etBody.setText("");
+                        }
                     }
+                    break;
                 }
-            }).start();
-        } else {
+            }
+        }
+
+        if (activeEntry == null) {
+            isEditMode = false;
             activeEntry = new TaskItem();
+            activeEntry.userId = activeUserId;
+            activeEntry.isPinned = false;
+            activeEntry.isRoutine = false;
+            activeEntry.completed = false;
         }
     }
 
     private void saveJournalWorkspaceData() {
         String titleInput = etTitle.getText().toString().trim();
-        String finalTitle;
+        String bodyInput = etBody.getText().toString().trim();
 
         if (titleInput.isEmpty()) {
-            // AUTO-GENERATION: Count how many journals exist to name it "Journal X"
-            int currentJournalCount = 1;
-            List<TaskItem> allItems = db.appDao().getAllTasks();
-            for (TaskItem item : allItems) {
-                if (item.title != null && (item.title.startsWith("Journal ") || item.title.startsWith("Journal:"))) {
-                    currentJournalCount++;
-                }
-            }
-            finalTitle = "Journal " + currentJournalCount;
-        } else {
-            // ENFORCED ISOLATION PREFIX: Force it to start with "Journal: " so TaskManagerFragment hides it!
-            if (!titleInput.startsWith("Journal ") && !titleInput.startsWith("Notetaking ")) {
-                finalTitle = "Journal: " + titleInput;
-            } else {
-                finalTitle = titleInput;
-            }
+            titleInput = "Untitled Entry";
         }
 
-        activeEntry.title = finalTitle;
-
-        // Match your database model defaults
+        // SERIALIZE BOTH FIELDS TOGETHER: Pack title and body securely inside the entity string model
+        activeEntry.title = "JOURNAL_NOTE: " + titleInput + " ||CONTENT_SEP|| " + bodyInput;
         activeEntry.isRoutine = false;
         activeEntry.completed = false;
 
-        // Background save thread execution
-        new Thread(() -> {
+        if (activeEntry.userId == 0) {
+            activeEntry.userId = prefs.getInt("userId", 1);
+        }
+
+        try {
             if (!isEditMode) {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy HH:mm", Locale.getDefault());
                 activeEntry.dateCreated = sdf.format(new Date());
@@ -101,8 +104,12 @@ public class JournalEditorActivity extends AppCompatActivity {
                 db.appDao().updateTask(activeEntry);
             }
 
-            // Close editor screen immediately after the Room database transaction completes
-            runOnUiThread(this::finish);
-        }).start();
+            Toast.makeText(this, "Journal saved successfully!", Toast.LENGTH_SHORT).show();
+            finish();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Save Failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 }

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_cream"
+    android:padding="24dp">
+
+    <ImageButton
+        android:id="@+id/btnProfileBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_revert"
+        app:tint="@color/accent_brown"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:contentDescription="Back" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintWidth_max="420dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/ivProfileAvatarBig"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_gravity="center"
+            android:src="@android:drawable/ic_menu_myplaces"
+            app:tint="@color/text_dark"
+            android:contentDescription="User Avatar" />
+
+        <TextView
+            android:id="@+id/lblProfUser"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="USERNAME"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark"
+            android:layout_marginTop="32dp"
+            tools:ignore="HardcodedText" />
+
+        <EditText
+            android:id="@+id/etProfileUsername"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
+            android:background="@android:drawable/editbox_background"
+            android:paddingHorizontal="12dp"
+            android:inputType="text"
+            android:textColor="@color/text_dark"
+            android:importantForAutofill="no"
+            tools:ignore="LabelFor" />
+
+        <TextView
+            android:id="@+id/lblProfPass"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PASSWORD"
+            android:textStyle="bold"
+            android:textColor="@color/text_dark"
+            android:layout_marginTop="16dp"
+            tools:ignore="HardcodedText" />
+
+        <EditText
+            android:id="@+id/etProfilePassword"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
+            android:background="@android:drawable/editbox_background"
+            android:paddingHorizontal="12dp"
+            android:inputType="textPassword"
+            android:textColor="@color/text_dark"
+            android:importantForAutofill="no"
+            tools:ignore="LabelFor" />
+
+        <Button
+            android:id="@+id/btnProfileSave"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="32dp"
+            android:text="SAVE"
+            android:textColor="@color/text_dark"
+            android:backgroundTint="@android:color/white"
+            style="@android:style/Widget.DeviceDefault.Button"
+            tools:ignore="HardcodedText" />
+
+        <Button
+            android:id="@+id/btnProfileLogout"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="12dp"
+            android:text="LOG OUT"
+            android:textColor="#E07A5F"
+            style="@android:style/Widget.DeviceDefault.Button.Borderless"
+            tools:ignore="HardcodedText" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

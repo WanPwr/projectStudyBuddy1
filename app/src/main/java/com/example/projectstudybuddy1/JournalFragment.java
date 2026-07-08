@@ -1,14 +1,17 @@
 package com.example.projectstudybuddy1;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -23,23 +26,29 @@ public class JournalFragment extends Fragment {
     private AppDatabase db;
     private JournalAdapter adapter;
     private final List<TaskItem> journalList = new ArrayList<>();
+    private SharedPreferences prefs;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_journal, container, false);
         db = AppDatabase.getDatabase(requireContext());
+        prefs = requireContext().getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
 
         RecyclerView rvJournalEntries = view.findViewById(R.id.rvJournalEntries);
-        rvJournalEntries.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new JournalAdapter();
-        rvJournalEntries.setAdapter(adapter);
+        if (rvJournalEntries != null) {
+            rvJournalEntries.setLayoutManager(new LinearLayoutManager(getContext()));
+            adapter = new JournalAdapter();
+            rvJournalEntries.setAdapter(adapter);
+        }
 
         FloatingActionButton fabAdd = view.findViewById(R.id.fabAddJournalEntry);
-        fabAdd.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), JournalEditorActivity.class);
-            startActivity(intent);
-        });
+        if (fabAdd != null) {
+            fabAdd.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), JournalEditorActivity.class);
+                startActivity(intent);
+            });
+        }
 
         return view;
     }
@@ -52,15 +61,17 @@ public class JournalFragment extends Fragment {
 
     private void loadJournalEntries() {
         journalList.clear();
+        int activeUserId = prefs.getInt("userId", 1);
+        List<TaskItem> allItems = db.appDao().getAllTasks(activeUserId);
 
-        // Separate Logic: Pull only items flagged with Journal or Notetaking keywords
-        List<TaskItem> allItems = db.appDao().getAllTasks();
         for (TaskItem item : allItems) {
-            if (item.title != null && (item.title.startsWith("Journal ") || item.title.startsWith("Notetaking "))) {
+            if (item.title != null && item.title.startsWith("JOURNAL_NOTE:")) {
                 journalList.add(item);
             }
         }
-        adapter.notifyDataSetChanged();
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
     }
 
     private class JournalAdapter extends RecyclerView.Adapter<JournalAdapter.JournalViewHolder> {
@@ -74,7 +85,18 @@ public class JournalFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull JournalViewHolder holder, int position) {
             TaskItem entry = journalList.get(position);
-            holder.tvTitle.setText(entry.title);
+
+            String rawTitleClean = entry.title.replace("JOURNAL_NOTE:", "").trim();
+
+            String userCleanTitle;
+            if (rawTitleClean.contains("||CONTENT_SEP||")) {
+                String[] segments = rawTitleClean.split("\\s*\\|\\|CONTENT_SEP\\|\\|\\s*");
+                userCleanTitle = segments[0].trim();
+            } else {
+                userCleanTitle = rawTitleClean;
+            }
+
+            holder.tvTitle.setText(userCleanTitle);
             holder.tvDate.setText(entry.dateCreated);
 
             holder.itemView.setOnClickListener(v -> {
@@ -83,25 +105,37 @@ public class JournalFragment extends Fragment {
                 startActivity(intent);
             });
 
-            holder.ivDelete.setOnClickListener(v -> {
-                db.appDao().deleteTask(entry);
-                journalList.remove(position);
-                notifyItemRemoved(position);
-            });
+            if (holder.deleteClickBox != null) {
+                holder.deleteClickBox.setOnClickListener(v ->
+                        new AlertDialog.Builder(requireContext())
+                                .setTitle("Delete Journal Entry")
+                                .setMessage("Are you sure you want to delete this journal entry?")
+                                .setPositiveButton("Delete", (dialog, which) -> {
+                                    db.appDao().deleteTask(entry);
+                                    int currentPos = holder.getBindingAdapterPosition();
+                                    if (currentPos != RecyclerView.NO_POSITION && currentPos < journalList.size()) {
+                                        journalList.remove(currentPos);
+                                        notifyItemRemoved(currentPos);
+                                    }
+                                    Toast.makeText(getContext(), "Journal entry deleted", Toast.LENGTH_SHORT).show();
+                                })
+                                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                                .show()
+                );
+            }
         }
 
-        @Override
-        public int getItemCount() { return journalList.size(); }
+        @Override public int getItemCount() { return journalList.size(); }
 
         class JournalViewHolder extends RecyclerView.ViewHolder {
             TextView tvTitle, tvDate;
-            ImageView ivDelete;
+            View deleteClickBox;
 
             public JournalViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvTitle = itemView.findViewById(R.id.tvTaskRowTitle);
                 tvDate = itemView.findViewById(R.id.tvTaskRowDate);
-                ivDelete = itemView.findViewById(R.id.ivTaskRowDelete);
+                deleteClickBox = itemView.findViewById(R.id.flDeleteContainer);
 
                 View progressMeter = itemView.findViewById(R.id.pbRowTaskMeter);
                 if (progressMeter != null) progressMeter.setVisibility(View.GONE);

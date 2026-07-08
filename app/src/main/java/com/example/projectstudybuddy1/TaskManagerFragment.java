@@ -1,5 +1,7 @@
 package com.example.projectstudybuddy1;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Html;
@@ -7,13 +9,15 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,20 +42,20 @@ public class TaskManagerFragment extends Fragment {
     private final List<TaskItem> masterTaskList = new ArrayList<>();
     private final List<SubTaskItem> localizedSubTasks = new ArrayList<>();
     private TaskItem runningActiveParentTask;
+    private SharedPreferences prefs;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_task_manager, container, false);
         db = AppDatabase.getDatabase(requireContext());
+        prefs = requireContext().getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
 
-        // Layout Bindings
         panelListView = v.findViewById(R.id.panelTaskListView);
         cardKeepEditor = v.findViewById(R.id.cardKeepEditor);
         etMainTitle = v.findViewById(R.id.etNoteMainTitle);
         tvTimestamp = v.findViewById(R.id.tvEditedTimestamp);
 
-        // Core Task Card List Initialization
         RecyclerView rvMaster = v.findViewById(R.id.rvTodoTasks);
         if (rvMaster != null) {
             rvMaster.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -59,7 +63,6 @@ public class TaskManagerFragment extends Fragment {
             rvMaster.setAdapter(masterAdapter);
         }
 
-        // Keep-style Nested Checklist Checklist Initialization
         RecyclerView rvSub = v.findViewById(R.id.rvNestedChecklist);
         if (rvSub != null) {
             rvSub.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -67,7 +70,6 @@ public class TaskManagerFragment extends Fragment {
             rvSub.setAdapter(subAdapter);
         }
 
-        // Trigger action click listeners
         View fabAdd = v.findViewById(R.id.fabAddTask);
         if (fabAdd != null) {
             fabAdd.setOnClickListener(view -> launchKeepEditorWorkspace(null));
@@ -83,7 +85,11 @@ public class TaskManagerFragment extends Fragment {
                     newSub.parentTaskId = runningActiveParentTask.taskId;
                 }
                 localizedSubTasks.add(newSub);
-                subAdapter.notifyItemInserted(localizedSubTasks.size() - 1);
+
+                if (subAdapter != null) {
+                    subAdapter.setFocusOnNextBind(true);
+                    subAdapter.notifyItemInserted(localizedSubTasks.size() - 1);
+                }
             });
         }
 
@@ -92,19 +98,29 @@ public class TaskManagerFragment extends Fragment {
             btnClose.setOnClickListener(view -> closeAndSaveKeepNoteWorkspace());
         }
 
-        loadMasterDashboardData();
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadMasterDashboardData();
     }
 
     private void loadMasterDashboardData() {
         int previousSize = masterTaskList.size();
         masterTaskList.clear();
+        int activeUserId = prefs.getInt("userId", 1);
 
-        // BOUNDARY ISOLATION FILTER: Strip out entries belonging to the Journal workspace
-        List<TaskItem> allItems = db.appDao().getAllTasks();
+        List<TaskItem> allItems = db.appDao().getAllTasks(activeUserId);
         for (TaskItem item : allItems) {
-            if (item.title != null && !item.title.startsWith("Journal ") && !item.title.startsWith("Notetaking ")) {
-                masterTaskList.add(item);
+            if (item.title != null) {
+                boolean isJournal = item.title.startsWith("JOURNAL_NOTE:");
+                boolean isFlashcardDeck = item.title.startsWith("DECK_NOTE:");
+
+                if (!isJournal && !isFlashcardDeck) {
+                    masterTaskList.add(item);
+                }
             }
         }
 
@@ -120,16 +136,20 @@ public class TaskManagerFragment extends Fragment {
             subAdapter.notifyItemRangeRemoved(0, previousSubCount);
         }
 
+        int activeUserId = prefs.getInt("userId", 1);
+
         if (selectedTask == null) {
             runningActiveParentTask = new TaskItem();
             runningActiveParentTask.title = "";
             runningActiveParentTask.isRoutine = false;
+            runningActiveParentTask.userId = activeUserId;
+
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy HH:mm", Locale.getDefault());
             runningActiveParentTask.dateCreated = sdf.format(new Date());
 
             if (etMainTitle != null) {
                 etMainTitle.setText("");
-                etMainTitle.setHint("Title"); // FIXED: Displays crisp clean placeholder "Title" text hint
+                etMainTitle.setHint("Title");
             }
             if (tvTimestamp != null) {
                 tvTimestamp.setText(Html.fromHtml("<b>Status:</b> New To-Do Item", Html.FROM_HTML_MODE_LEGACY));
@@ -165,6 +185,10 @@ public class TaskManagerFragment extends Fragment {
                 runningActiveParentTask.title = updatedTitle;
             }
 
+            if (runningActiveParentTask.userId == 0) {
+                runningActiveParentTask.userId = prefs.getInt("userId", 1);
+            }
+
             db.appDao().updateTask(runningActiveParentTask);
 
             for (SubTaskItem sub : localizedSubTasks) {
@@ -178,9 +202,6 @@ public class TaskManagerFragment extends Fragment {
         loadMasterDashboardData();
     }
 
-    // =======================================================
-    // ADAPTER 1: TO-DO ROW MASTER DISPLAY LIST
-    // =======================================================
     private class MasterTaskAdapter extends RecyclerView.Adapter<MasterTaskAdapter.MasterViewHolder> {
         @NonNull
         @Override
@@ -213,38 +234,47 @@ public class TaskManagerFragment extends Fragment {
 
             holder.itemView.setOnClickListener(view -> launchKeepEditorWorkspace(task));
 
-            holder.ivDelete.setOnClickListener(view -> {
-                int indexPosition = holder.getBindingAdapterPosition();
-                if (indexPosition != RecyclerView.NO_POSITION) {
-                    db.appDao().deleteTask(task);
-                    masterTaskList.remove(indexPosition);
-                    notifyItemRemoved(indexPosition);
-                }
-            });
+            if (holder.deleteClickBox != null) {
+                holder.deleteClickBox.setOnClickListener(view ->
+                        new AlertDialog.Builder(requireContext())
+                                .setTitle("Delete To-Do Item")
+                                .setMessage("Are you sure you want to delete this to-do item?")
+                                .setPositiveButton("Delete", (dialog, which) -> {
+                                    int indexPosition = holder.getBindingAdapterPosition();
+                                    if (indexPosition != RecyclerView.NO_POSITION) {
+                                        db.appDao().deleteTask(task);
+                                        masterTaskList.remove(indexPosition);
+                                        notifyItemRemoved(indexPosition);
+                                    }
+                                    Toast.makeText(getContext(), "To-Do item deleted", Toast.LENGTH_SHORT).show();
+                                })
+                                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                                .show()
+                );
+            }
         }
 
         @Override public int getItemCount() { return masterTaskList.size(); }
 
         class MasterViewHolder extends RecyclerView.ViewHolder {
             TextView tvTitle, tvDate, tvItemPercent;
-            ImageView ivDelete;
+            View deleteClickBox;
             android.widget.ProgressBar pbItemMeter;
 
             public MasterViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvTitle = itemView.findViewById(R.id.tvTaskRowTitle);
                 tvDate = itemView.findViewById(R.id.tvTaskRowDate);
-                ivDelete = itemView.findViewById(R.id.ivTaskRowDelete);
                 pbItemMeter = itemView.findViewById(R.id.pbRowTaskMeter);
                 tvItemPercent = itemView.findViewById(R.id.tvRowTaskPercentage);
+                deleteClickBox = itemView.findViewById(R.id.flDeleteContainer);
             }
         }
     }
 
-    // =======================================================
-    // ADAPTER 2: KEEP WORKSPACE SUB-CHECKLIST
-    // =======================================================
     private class SubChecklistAdapter extends RecyclerView.Adapter<SubChecklistAdapter.SubViewHolder> {
+        private boolean requestFocusOnBind = false;
+
         @NonNull
         @Override
         public SubViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -256,7 +286,6 @@ public class TaskManagerFragment extends Fragment {
         public void onBindViewHolder(@NonNull SubViewHolder holder, int pos) {
             SubTaskItem currentSub = localizedSubTasks.get(pos);
 
-            // Wipe out older concurrent listeners from recycled item memory tracks
             if (holder.textWatcherInstance != null) {
                 holder.etSubText.removeTextChangedListener(holder.textWatcherInstance);
             }
@@ -292,9 +321,25 @@ public class TaskManagerFragment extends Fragment {
                     notifyItemRemoved(indexPosition);
                 }
             });
+
+            if (requestFocusOnBind && pos == localizedSubTasks.size() - 1) {
+                requestFocusOnBind = false;
+                holder.etSubText.post(() -> {
+                    holder.etSubText.requestFocus();
+                    InputMethodManager imm = (InputMethodManager)
+                            requireContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.showSoftInput(holder.etSubText, InputMethodManager.SHOW_IMPLICIT);
+                    }
+                });
+            }
         }
 
         @Override public int getItemCount() { return localizedSubTasks.size(); }
+
+        public void setFocusOnNextBind(boolean focus) {
+            this.requestFocusOnBind = focus;
+        }
 
         class SubViewHolder extends RecyclerView.ViewHolder {
             CheckBox cbSubCheck;
