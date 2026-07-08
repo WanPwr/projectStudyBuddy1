@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ProjectStudyBuddy1</string>
 
@@ -6,4 +7,16 @@
     <string name="menu_tasks">Tasks</string>
     <string name="menu_journal">Journal</string>
     <string name="menu_cards">Cards</string>
+
+    <string name="desc_go_back">Go Back</string>
+    <string name="deck_study_workspace">Deck Study Workspace</string>
+    <string name="desc_toggle_edit">Toggle Edit</string>
+    <string name="default_card_index">1</string>
+    <string name="tap_to_reveal_answer">Tap Card to Reveal Answer</string>
+    <string name="hint_type_question">Type Question here…</string>
+    <string name="hint_type_answer">Type Answer here…</string>
+    <string name="desc_delete_card">Delete Card</string>
+    <string name="desc_previous_card">Previous Card</string>
+    <string name="desc_add_new_card">Add New Card</string>
+    <string name="desc_next_card">Next Card</string>
 </resources>

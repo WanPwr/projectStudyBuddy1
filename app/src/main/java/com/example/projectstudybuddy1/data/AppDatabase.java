@@ -12,8 +12,7 @@ import androidx.room.Delete;
 import androidx.room.OnConflictStrategy;
 import java.util.List;
 
-// Added SubTaskItem.class to the database entity array list registry
-@Database(entities = {TaskItem.class, JournalEntry.class, FlashcardItem.class, SubTaskItem.class}, version = 1, exportSchema = false)
+@Database(entities = {TaskItem.class, FlashcardItem.class, SubTaskItem.class}, version = 3, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract AppDao appDao();
@@ -26,7 +25,7 @@ public abstract class AppDatabase extends RoomDatabase {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     AppDatabase.class, "studybuddy_db")
                             .allowMainThreadQueries()
-                            .fallbackToDestructiveMigration() // Wipes data safely if schema mismatch happens
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }
@@ -36,14 +35,13 @@ public abstract class AppDatabase extends RoomDatabase {
 
     @Dao
     public interface AppDao {
-        // Task operations
-        @Query("SELECT * FROM tasks WHERE isRoutine = 0")
-        List<TaskItem> getAllTodos();
+        // --- Core Task & Journal Operations (User Filtered) ---
+        @Query("SELECT * FROM tasks WHERE isRoutine = 0 AND userId = :userId AND title NOT LIKE 'JOURNAL_NOTE:%' AND title NOT LIKE 'DECK_NOTE:%'")
+        List<TaskItem> getAllTodos(int userId);
 
-        @Query("SELECT * FROM tasks WHERE isRoutine = 1")
-        List<TaskItem> getAllRoutines();
+        @Query("SELECT * FROM tasks WHERE isRoutine = 1 AND userId = :userId")
+        List<TaskItem> getAllRoutines(int userId);
 
-        // Modified task inserts to return 'long' so we get the auto-generated row id for nested mapping
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         long insertTask(TaskItem item);
 
@@ -53,38 +51,14 @@ public abstract class AppDatabase extends RoomDatabase {
         @Delete
         void deleteTask(TaskItem item);
 
-        // Journal operations
-        @Query("SELECT * FROM journal ORDER BY id DESC")
-        List<JournalEntry> getAllJournalEntries();
+        @Query("SELECT * FROM tasks WHERE userId = :userId ORDER BY taskId DESC")
+        List<TaskItem> getAllTasks(int userId);
 
-        @Insert
-        void insertJournal(JournalEntry entry);
+        // FIXED: Added missing tracking query requested by FlashcardStudyActivity
+        @Query("SELECT * FROM tasks WHERE taskId = :taskId LIMIT 1")
+        TaskItem getTaskById(int taskId);
 
-        @Update
-        void updateJournal(JournalEntry entry);
-
-        @Delete
-        void deleteJournal(JournalEntry entry);
-
-        // Flashcard operations
-        @Query("SELECT DISTINCT deckName FROM flashcards")
-        List<String> getUniqueDecks();
-
-        @Query("SELECT * FROM flashcards WHERE deckName = :deck")
-        List<FlashcardItem> getCardsFromDeck(String deck);
-
-        @Insert
-        void insertCard(FlashcardItem card);
-
-        @Delete
-        void deleteCard(FlashcardItem card);
-
-        // ==========================================
-        // NEW GOOGLE KEEP SUB-TASK WORKSPACE HANDLERS
-        // ==========================================
-        @Query("SELECT * FROM tasks ORDER BY taskId DESC")
-        List<TaskItem> getAllTasks();
-
+        // --- Keep-Style Checklist Operations ---
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         void insertSubTask(SubTaskItem subTask);
 
@@ -99,5 +73,19 @@ public abstract class AppDatabase extends RoomDatabase {
 
         @Query("SELECT COUNT(*) FROM sub_tasks WHERE isChecked = 1")
         int getCheckedSubTaskCount();
+
+        // --- Flashcard Operations ---
+        @Query("SELECT * FROM flashcard_cards")
+        List<FlashcardItem> getUniqueDecks();
+
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        void insertCard(FlashcardItem card);
+
+        @Delete
+        void deleteCard(FlashcardItem card);
+
+        // FIXED: Cleaned up duplicate signatures to point directly to unified naming schema
+        @Query("SELECT * FROM flashcard_cards WHERE parentDeckId = :deckId ORDER BY cardId ASC")
+        List<FlashcardItem> getCardsForDeck(int deckId);
     }
 }

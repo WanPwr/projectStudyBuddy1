@@ -17,7 +17,8 @@
         app:layout_constraintBottom_toTopOf="@id/tvTimesUpTitle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintVertical_chainStyle="packed" />
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:ignore="HardcodedText" />
 
     <TextView
         android:id="@+id/tvTimesUpTitle"
@@ -50,11 +51,12 @@
 
     <SeekBar
         android:id="@+id/slideToDismiss"
-        android:layout_width="match_parent"
+        android:layout_width="360dp"
         android:layout_height="56dp"
         android:layout_marginTop="40dp"
         android:max="100"
         android:progress="0"
+        android:splitTrack="false"
         app:layout_constraintTop_toBottomOf="@id/tvDismissSubtitle"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

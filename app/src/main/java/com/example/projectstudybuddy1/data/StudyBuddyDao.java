@@ -11,34 +11,51 @@ import java.util.List;
 @Dao
 public interface StudyBuddyDao {
 
-    // Original Core User Task Operations
+    // ==========================================================
+    // LEGACY TODO OPERATIONS (Entity: TodoEntity)
+    // ==========================================================
     @Query("SELECT * FROM todo_list WHERE userId = :userId ORDER BY createdAt DESC")
     List<TodoEntity> getAllTasksForUser(int userId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertTask(TodoEntity todo);
+    void insertLegacyTodo(TodoEntity todo);
 
     @Update
-    void updateTask(TodoEntity todo);
+    void updateLegacyTodo(TodoEntity todo);
 
     @Delete
-    void deleteTask(TodoEntity todo);
+    void deleteLegacyTodo(TodoEntity todo);
 
     // ==========================================================
-    // NEW TASK WORKSPACE CONNECTIONS (Google Keep-Style Subtasks)
+    // PRIMARY TASK & WORKSPACE SYSTEM (Entity: TaskItem)
     // ==========================================================
-
-    // Parent Task Row Sync Engine
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insertTask(TaskItem task);
 
     @Update
     void updateTask(TaskItem task);
 
-    @Query("SELECT * FROM tasks ORDER BY taskId DESC")
-    List<TaskItem> getAllTasks();
+    @Delete
+    void deleteTask(TaskItem task);
 
-    // Child Nested Sub-Task Operations
+    // FIXED: Combined query names to perfectly match your Fragment expectations
+    @Query("SELECT * FROM tasks WHERE userId = :userId ORDER BY taskId DESC")
+    List<TaskItem> getAllTasks(int userId);
+
+    // FIXED: Added missing tracking lookup needed by your FlashcardStudyActivity
+    @Query("SELECT * FROM tasks WHERE taskId = :taskId LIMIT 1")
+    TaskItem getTaskById(int taskId);
+
+    @Query("SELECT * FROM tasks WHERE title LIKE 'JOURNAL_NOTE:%' AND userId = :userId ORDER BY taskId DESC")
+    List<TaskItem> getJournalsForUser(int userId);
+
+    // Legacy fallback lookup
+    @Query("SELECT * FROM tasks ORDER BY taskId DESC")
+    List<TaskItem> getAllTasksFallback();
+
+    // ==========================================================
+    // NESTED SUB-TASK WORKSPACES (Entity: SubTaskItem)
+    // ==========================================================
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertSubTask(SubTaskItem subTask);
 
@@ -48,10 +65,21 @@ public interface StudyBuddyDao {
     @Query("SELECT * FROM sub_tasks WHERE parentTaskId = :parentId")
     List<SubTaskItem> getSubTasksForParent(int parentId);
 
-    // Live Progress Dashboard Metrics Queries
     @Query("SELECT COUNT(*) FROM sub_tasks")
     int getTotalSubTaskCount();
 
     @Query("SELECT COUNT(*) FROM sub_tasks WHERE isChecked = 1")
     int getCheckedSubTaskCount();
+
+    // ==========================================================
+    // FLASHCARD CARD ENGINE WORKSPACES (Entity: FlashcardItem)
+    // ==========================================================
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertCard(FlashcardItem card);
+
+    @Delete
+    void deleteCard(FlashcardItem card);
+
+    @Query("SELECT * FROM flashcard_cards WHERE parentDeckId = :deckId ORDER BY cardId ASC")
+    List<FlashcardItem> getCardsForDeck(int deckId);
 }
