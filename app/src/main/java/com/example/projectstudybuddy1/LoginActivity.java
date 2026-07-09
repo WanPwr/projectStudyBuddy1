@@ -9,8 +9,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.util.Locale;
-
 public class LoginActivity extends AppCompatActivity {
 
     private View panelLogin, panelSignup;
@@ -68,9 +66,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // Match case-insensitive validation criteria safely
         if (username.equalsIgnoreCase(savedUser) && password.equals(savedPass)) {
-            // Keep the active logging flags persistent
             prefs.edit().putBoolean("isLoggedIn", true).apply();
             navigateToMainDashboard();
         } else {
@@ -93,13 +89,11 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // AUTO USER ID GENERATOR: Generates a persistent int key to feed database foreign keys
         int generatedUserId = prefs.getInt("lastMaxUserId", 0) + 1;
 
-        // Save session details cleanly to local storage file blocks
         prefs.edit()
                 .putInt("userId", generatedUserId)
-                .putInt("lastMaxUserId", generatedUserId) // Track global user increments
+                .putInt("lastMaxUserId", generatedUserId)
                 .putString("username", username)
                 .putString("password", password)
                 .putBoolean("isLoggedIn", true)

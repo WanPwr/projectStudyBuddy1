@@ -19,4 +19,9 @@
     <string name="desc_previous_card">Previous Card</string>
     <string name="desc_add_new_card">Add New Card</string>
     <string name="desc_next_card">Next Card</string>
+
+    <string name="hint_username">Enter your username</string>
+    <string name="hint_password">Enter your password</string>
+    <string name="splash_tagline">A productivity app for student</string>
+    <string name="desc_login_logo">Login App Logo</string>
 </resources>

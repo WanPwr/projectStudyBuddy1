@@ -38,7 +38,6 @@ public class DashboardFragment extends Fragment {
     private DashboardTaskAdapter adapter;
     private final List<TaskItem> pureTodoList = new ArrayList<>();
 
-    private TextView tvStreakText;
     private TextView tvWelcomeHeader;
     private PieChart pieChartTodo;
     private SharedPreferences prefs;
@@ -52,7 +51,6 @@ public class DashboardFragment extends Fragment {
         prefs = requireContext().getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
 
         tvWelcomeHeader = v.findViewById(R.id.tvWelcomeUserHeader);
-        tvStreakText = v.findViewById(R.id.tvStreakCountLabel);
         pieChartTodo = v.findViewById(R.id.todoPieChart);
         rvIndividualTodoCompletion = v.findViewById(R.id.rvMasterTasks);
 
@@ -109,7 +107,6 @@ public class DashboardFragment extends Fragment {
         // Retrieve current active user integer ID from preferences context
         int activeUserId = prefs.getInt("userId", 1);
 
-        // FIXED QUERY PARAMETER PASSING
         List<TaskItem> allItems = db.appDao().getAllTasks(activeUserId);
 
         int totalSubTasksCount = 0;
