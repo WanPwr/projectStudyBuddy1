@@ -24,7 +24,7 @@
         android:layout_height="120dp"
         android:layout_marginTop="40dp"
         android:scaleType="fitCenter"
-        android:src="@drawable/ic_profile"
+        android:src="@drawable/ic_profile2"
         app:tint="@color/text_dark"
         android:contentDescription="Profile Avatar"
         app:layout_constraintTop_toTopOf="parent"

@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -20,6 +21,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -47,6 +49,7 @@ public class TaskManagerFragment extends Fragment {
     private SharedPreferences prefs;
 
     private String currentSelectedColorHex = "#FFFFFF";
+    private String lastKnownSearchQuery = "";
 
     @Nullable
     @Override
@@ -105,17 +108,39 @@ public class TaskManagerFragment extends Fragment {
 
         setupColorPickerClickListeners(v);
 
+        SearchView svTodoSearch = v.findViewById(R.id.svTodoSearch);
+        if (svTodoSearch != null) {
+            svTodoSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    lastKnownSearchQuery = query.trim();
+                    loadMasterDashboardData();
+                    return true;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    lastKnownSearchQuery = newText.trim();
+                    loadMasterDashboardData();
+                    return true;
+                }
+            });
+        }
+
         return v;
     }
 
     private void setupColorPickerClickListeners(View root) {
         if (layoutColorPickerRow == null) return;
+
+        View pickerWhite = layoutColorPickerRow.findViewById(R.id.todoDotWhite);
         View pickerYellow = layoutColorPickerRow.findViewById(R.id.todoDotYellow);
         View pickerBlue = layoutColorPickerRow.findViewById(R.id.todoDotBlue);
         View pickerRed = root.findViewById(R.id.todoDotRed);
         View pickerGreen = root.findViewById(R.id.todoDotGreen);
         View pickerPurple = root.findViewById(R.id.todoDotPurple);
 
+        if (pickerWhite != null) pickerWhite.setOnClickListener(v -> applyEditorContainerTint("#FFFFFF"));
         if (pickerYellow != null) pickerYellow.setOnClickListener(v -> applyEditorContainerTint("#FDF0CD"));
         if (pickerBlue != null) pickerBlue.setOnClickListener(v -> applyEditorContainerTint("#3D405B"));
         if (pickerRed != null) pickerRed.setOnClickListener(v -> applyEditorContainerTint("#E63946"));
@@ -134,7 +159,6 @@ public class TaskManagerFragment extends Fragment {
             }
         }
 
-        // CONTRAST ENGINE: Added #E63946 (red) to high-contrast white calculation group
         boolean isDarkBg = hexColor.equals("#3D405B") || hexColor.equals("#A06CD5") || hexColor.equals("#81B29A") || hexColor.equals("#E63946");
         int primaryText = isDarkBg ? Color.WHITE : Color.parseColor("#3D405B");
         int secondaryText = isDarkBg ? Color.parseColor("#E0E0E0") : Color.GRAY;
@@ -156,11 +180,6 @@ public class TaskManagerFragment extends Fragment {
             tvAdd.setCompoundDrawableTintList(ColorStateList.valueOf(secondaryText));
         }
 
-        View btnClose = cardKeepEditor != null ? cardKeepEditor.findViewById(R.id.btnKeepCloseAndSave) : null;
-        if (btnClose instanceof TextView) {
-            ((TextView) btnClose).setTextColor(primaryText);
-        }
-
         if (subAdapter != null) {
             subAdapter.notifyDataSetChanged();
         }
@@ -177,7 +196,13 @@ public class TaskManagerFragment extends Fragment {
         masterTaskList.clear();
         int activeUserId = prefs.getInt("userId", 1);
 
-        List<TaskItem> allItems = db.appDao().getAllTasks(activeUserId);
+        List<TaskItem> allItems;
+        if (lastKnownSearchQuery.isEmpty()) {
+            allItems = db.appDao().getAllTasks(activeUserId);
+        } else {
+            allItems = db.appDao().searchTasksByQuery(activeUserId, lastKnownSearchQuery);
+        }
+
         for (TaskItem item : allItems) {
             if (item.title != null) {
                 boolean isJournal = item.title.startsWith("JOURNAL_NOTE:");
@@ -191,10 +216,11 @@ public class TaskManagerFragment extends Fragment {
 
         if (masterAdapter != null) {
             masterAdapter.notifyItemRangeChanged(0, Math.max(previousSize, masterTaskList.size()));
+            masterAdapter.notifyDataSetChanged();
         }
     }
 
-    private void launchKeepEditorWorkspace(@Nullable TaskItem selectedTask) {
+    private void launchKeepEditorWorkspace(TaskItem selectedTask) {
         int previousSubCount = localizedSubTasks.size();
         localizedSubTasks.clear();
         if (previousSubCount > 0 && subAdapter != null) {
@@ -316,24 +342,6 @@ public class TaskManagerFragment extends Fragment {
             holder.tvTitle.setText(rawTitleClean);
             holder.tvDate.setText(task.dateCreated);
 
-            try {
-                int parsedColor = Color.parseColor(displayColorHex);
-                holder.cardContainer.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
-
-                // CONTRAST ENGINE: Master task row toggles updated with Red (#E63946) rules logic
-                if (displayColorHex.equals("#3D405B") || displayColorHex.equals("#A06CD5") || displayColorHex.equals("#81B29A") || displayColorHex.equals("#E63946")) {
-                    holder.tvTitle.setTextColor(Color.WHITE);
-                    holder.tvDate.setTextColor(Color.LTGRAY);
-                    holder.tvItemPercent.setTextColor(Color.WHITE);
-                } else {
-                    holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
-                    holder.tvDate.setTextColor(Color.GRAY);
-                    holder.tvItemPercent.setTextColor(Color.parseColor("#3D405B"));
-                }
-            } catch (IllegalArgumentException e) {
-                holder.cardContainer.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
-            }
-
             List<SubTaskItem> subTasks = db.appDao().getSubTasksForParent(task.taskId);
             int totalSubTasks = subTasks.size();
             int completedSubTasks = 0;
@@ -349,6 +357,34 @@ public class TaskManagerFragment extends Fragment {
 
             holder.tvItemPercent.setText(String.format(Locale.getDefault(), "%d%%", itemProgressPercent));
             holder.pbItemMeter.setProgress(itemProgressPercent);
+
+            try {
+                int parsedColor = Color.parseColor(displayColorHex);
+                holder.cardContainer.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
+
+                boolean isDarkBg = displayColorHex.equals("#3D405B") ||
+                        displayColorHex.equals("#A06CD5") ||
+                        displayColorHex.equals("#81B29A") ||
+                        displayColorHex.equals("#E63946");
+
+                if (isDarkBg) {
+                    holder.tvTitle.setTextColor(Color.WHITE);
+                    holder.tvDate.setTextColor(Color.LTGRAY);
+                    holder.tvItemPercent.setTextColor(Color.WHITE);
+
+                    holder.pbItemMeter.setProgressTintList(ColorStateList.valueOf(Color.WHITE));
+                    holder.pbItemMeter.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4DFFFFFF")));
+                } else {
+                    holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
+                    holder.tvDate.setTextColor(Color.GRAY);
+                    holder.tvItemPercent.setTextColor(Color.parseColor("#3D405B"));
+
+                    holder.pbItemMeter.setProgressTintList(ColorStateList.valueOf(Color.parseColor("#6F4E37")));
+                    holder.pbItemMeter.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+                }
+            } catch (IllegalArgumentException e) {
+                holder.cardContainer.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
+            }
 
             holder.itemView.setOnClickListener(view -> launchKeepEditorWorkspace(task));
 
@@ -414,7 +450,6 @@ public class TaskManagerFragment extends Fragment {
             holder.cbSubCheck.setOnCheckedChangeListener(null);
             holder.cbSubCheck.setChecked(currentSub.isChecked);
 
-            // CONTRAST ENGINE: Checklist nested item text contrast mapping updated to support Red (#E63946)
             boolean isDarkBg = currentSelectedColorHex.equals("#3D405B") || currentSelectedColorHex.equals("#A06CD5") || currentSelectedColorHex.equals("#81B29A") || currentSelectedColorHex.equals("#E63946");
             holder.etSubText.setTextColor(isDarkBg ? Color.WHITE : Color.parseColor("#3D405B"));
             holder.etSubText.setHintTextColor(isDarkBg ? Color.parseColor("#E0E0E0") : Color.GRAY);

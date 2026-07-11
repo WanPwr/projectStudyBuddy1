@@ -1,7 +1,11 @@
 package com.example.projectstudybuddy1;
 
+import android.animation.ArgbEvaluator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.LayoutInflater;
@@ -32,6 +36,10 @@ public class TimerFragment extends Fragment {
     private boolean isTimerRunning = false;
     private boolean isTimerPaused = false;
 
+    // ANIMATION WORKING SHARDS: References for managing structural view element glows
+    private ValueAnimator glowAnimator = null;
+    private View activelyGlowingView = null;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -58,6 +66,9 @@ public class TimerFragment extends Fragment {
 
         totalTimerMillis = initialSetTimeMillis;
         refreshTimerInterfaceStrings(totalTimerMillis);
+
+        // INITIALIZE EFFECT: Spin up the dynamic pulse animation immediately for default selection
+        triggerPulseAnimation(tvEditMinutes);
 
         return view;
     }
@@ -86,11 +97,55 @@ public class TimerFragment extends Fragment {
         });
     }
 
+    // GLOW EFFECT CONTROLLER ENGINE
+    private void triggerPulseAnimation(View targetView) {
+        clearPulseAnimation();
+
+        activelyGlowingView = targetView;
+        if (activelyGlowingView == null) return;
+
+        int transparentColor = Color.TRANSPARENT;
+        int targetGlowColor = Color.parseColor("#1F3D405B"); // Soft 12% alpha accent tone
+
+        glowAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), transparentColor, targetGlowColor);
+        glowAnimator.setDuration(800);
+        glowAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        glowAnimator.setRepeatMode(ValueAnimator.REVERSE);
+
+        glowAnimator.addUpdateListener(animation -> {
+            if (activelyGlowingView != null) {
+                activelyGlowingView.setBackgroundColor((int) animation.getAnimatedValue());
+            }
+        });
+
+        glowAnimator.start();
+    }
+
+    private void clearPulseAnimation() {
+        if (glowAnimator != null) {
+            glowAnimator.cancel();
+            glowAnimator = null;
+        }
+        if (activelyGlowingView != null) {
+            activelyGlowingView.setBackgroundColor(Color.TRANSPARENT);
+            activelyGlowingView = null;
+        }
+    }
+
     private void changeActiveEditingUnit(TimeUnit unit) {
         if (isTimerRunning) return;
         activeSelectedUnit = unit;
         tvActiveUnitLabel.setText("Editing: " + unit.name());
         refreshTimerInterfaceStrings(totalTimerMillis);
+
+        // Map selection variations cleanly onto targeted view blocks
+        if (unit == TimeUnit.HOUR) {
+            triggerPulseAnimation(tvEditHours);
+        } else if (unit == TimeUnit.MINUTE) {
+            triggerPulseAnimation(tvEditMinutes);
+        } else {
+            triggerPulseAnimation(tvEditSeconds);
+        }
     }
 
     private void adjustActiveUnit(int amount) {
@@ -158,6 +213,9 @@ public class TimerFragment extends Fragment {
         isTimerRunning = true;
         isTimerPaused = false;
 
+        // Disengage the active pulsing glow view while the countdown sequence operates active tick runs
+        clearPulseAnimation();
+
         btnRestart.setVisibility(View.GONE);
         btnToggleAction.setText("❚❚ Pause");
         btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFE07A5F));
@@ -190,8 +248,9 @@ public class TimerFragment extends Fragment {
                     tvUpperHint.setVisibility(View.VISIBLE);
                     tvLowerHint.setVisibility(View.VISIBLE);
 
-                    // FIXED: Removed fragment audio engine invocation completely.
-                    // This avoids duplicate audio allocations running concurrently with the Activity.
+                    // Re-engage active glow tracking parameters once cycle halts complete
+                    changeActiveEditingUnit(activeSelectedUnit);
+
                     try {
                         Intent intent = new Intent(requireContext(), TimerEndedActivity.class);
                         startActivity(intent);
@@ -216,6 +275,9 @@ public class TimerFragment extends Fragment {
 
         tvUpperHint.setVisibility(View.VISIBLE);
         tvLowerHint.setVisibility(View.VISIBLE);
+
+        // Resume active flashing highlight indicators while workspace stays paused/idle
+        changeActiveEditingUnit(activeSelectedUnit);
     }
 
     private void resetToLastConfiguredTime() {
@@ -231,11 +293,15 @@ public class TimerFragment extends Fragment {
         btnToggleAction.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF81B29A));
 
         refreshTimerInterfaceStrings(totalTimerMillis);
+
+        // Reassert active glow states when standard values clear back to parameters
+        changeActiveEditingUnit(activeSelectedUnit);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        clearPulseAnimation(); // Clean memory properties safely on view destroy instances
         if (countDownTimer != null) {
             countDownTimer.cancel();
         }

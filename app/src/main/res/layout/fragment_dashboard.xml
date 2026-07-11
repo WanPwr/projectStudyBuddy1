@@ -16,19 +16,18 @@
             android:id="@+id/ivDashboardAvatar"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:src="@drawable/ic_profile"
+            android:src="@drawable/ic_profile2"
             app:tint="@color/text_dark"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            android:contentDescription="Avatar"
-            tools:ignore="HardcodedText" />
+            android:contentDescription="Avatar" />
 
         <TextView
             android:id="@+id/tvWelcomeUserHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="WELCOME BACK, ABU"
+            android:text="WELCOME BACK,"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="@color/text_dark"
@@ -115,6 +114,21 @@
             android:nestedScrollingEnabled="false"
             app:layout_constraintTop_toBottomOf="@id/tvIndividualListHeaderBox"
             app:layout_constraintBottom_toBottomOf="parent" />
+
+        <TextView
+            android:id="@+id/tvEmptyTasksPlaceholder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="No tasks available"
+            android:textColor="@color/text_hint_darker"
+            android:textSize="16sp"
+            android:textStyle="italic"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/tvIndividualListHeaderBox"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:ignore="HardcodedText" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>

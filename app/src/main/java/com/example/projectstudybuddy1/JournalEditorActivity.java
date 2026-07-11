@@ -22,6 +22,7 @@ public class JournalEditorActivity extends AppCompatActivity {
 
     private AppDatabase db;
     private EditText etTitle, etBody;
+    private FloatingActionButton fabSave;
     private TaskItem activeEntry;
     private boolean isEditMode = false;
     private SharedPreferences prefs;
@@ -39,7 +40,7 @@ public class JournalEditorActivity extends AppCompatActivity {
         etTitle = findViewById(R.id.etJournalEntryTitle);
         etBody = findViewById(R.id.etJournalEntryBody);
         ImageButton btnBack = findViewById(R.id.btnJournalEditorBack);
-        FloatingActionButton fabSave = findViewById(R.id.fabSaveJournalEntry);
+        fabSave = findViewById(R.id.fabSaveJournalEntry);
 
         btnBack.setOnClickListener(v -> finish());
         fabSave.setOnClickListener(v -> saveJournalWorkspaceData());
@@ -100,6 +101,10 @@ public class JournalEditorActivity extends AppCompatActivity {
     }
 
     private void setupColorClickListeners() {
+        // FIXED: Added white dot listener for the default background color state selection
+        if (findViewById(R.id.dotWhite) != null) {
+            findViewById(R.id.dotWhite).setOnClickListener(v -> applyVisualBackgroundTint("#FFFFFF"));
+        }
         if (findViewById(R.id.dotYellow) != null) {
             findViewById(R.id.dotYellow).setOnClickListener(v -> applyVisualBackgroundTint("#FDF0CD"));
         }
@@ -116,7 +121,6 @@ public class JournalEditorActivity extends AppCompatActivity {
         etTitle.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
         etBody.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
 
-        // CONTRAST ENGINE: Dynamic high-contrast white toggle including Red (#E63946)
         if (hexColor.equals("#3D405B") || hexColor.equals("#A06CD5") || hexColor.equals("#81B29A") || hexColor.equals("#E63946")) {
             etTitle.setTextColor(Color.WHITE);
             etBody.setTextColor(Color.WHITE);
@@ -128,6 +132,8 @@ public class JournalEditorActivity extends AppCompatActivity {
             etTitle.setHintTextColor(Color.GRAY);
             etBody.setHintTextColor(Color.GRAY);
         }
+        // FIXED: Dynamically altered visual state code overrides for fabSave have been fully deleted here.
+        // The save button will now retain its XML layout colors permanently.
     }
 
     private void saveJournalWorkspaceData() {

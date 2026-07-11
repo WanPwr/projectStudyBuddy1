@@ -39,6 +39,7 @@ public class DashboardFragment extends Fragment {
     private final List<TaskItem> pureTodoList = new ArrayList<>();
 
     private TextView tvWelcomeHeader;
+    private TextView tvEmptyTasksPlaceholder;
     private PieChart pieChartTodo;
     private SharedPreferences prefs;
 
@@ -53,8 +54,9 @@ public class DashboardFragment extends Fragment {
         tvWelcomeHeader = v.findViewById(R.id.tvWelcomeUserHeader);
         pieChartTodo = v.findViewById(R.id.todoPieChart);
         rvIndividualTodoCompletion = v.findViewById(R.id.rvMasterTasks);
-
+        tvEmptyTasksPlaceholder = v.findViewById(R.id.tvEmptyTasksPlaceholder);
         ImageView ivAvatar = v.findViewById(R.id.ivDashboardAvatar);
+
         if (ivAvatar != null) {
             ivAvatar.setOnClickListener(view -> {
                 Intent goToProfile = new Intent(getActivity(), ProfileActivity.class);
@@ -96,7 +98,8 @@ public class DashboardFragment extends Fragment {
         pieChartTodo.setTransparentCircleRadius(0f);
         pieChartTodo.setHoleRadius(40f);
 
-        pieChartTodo.setNoDataText("Calculating completion metrics...");
+        // FIXED: Configured the exact string to show in the center of the chart area when empty
+        pieChartTodo.setNoDataText("No tasks available");
         pieChartTodo.setNoDataTextColor(Color.parseColor("#3D405B"));
         pieChartTodo.invalidate();
     }
@@ -136,6 +139,16 @@ public class DashboardFragment extends Fragment {
             }
         }
 
+        if (tvEmptyTasksPlaceholder != null) {
+            if (pureTodoList.isEmpty()) {
+                tvEmptyTasksPlaceholder.setVisibility(View.VISIBLE);
+                rvIndividualTodoCompletion.setVisibility(View.GONE);
+            } else {
+                tvEmptyTasksPlaceholder.setVisibility(View.GONE);
+                rvIndividualTodoCompletion.setVisibility(View.VISIBLE);
+            }
+        }
+
         if (adapter != null) {
             adapter.notifyDataSetChanged();
         }
@@ -146,7 +159,12 @@ public class DashboardFragment extends Fragment {
     private void calculateAndRenderPieChart(int completed, int total) {
         if (pieChartTodo == null) return;
 
-        pieChartTodo.setData(null);
+        // FIXED: If total is 0, clear data completely so the "No tasks available" text displays
+        if (total == 0) {
+            pieChartTodo.setData(null);
+            pieChartTodo.invalidate();
+            return;
+        }
 
         List<PieEntry> entries = new ArrayList<>();
         List<Integer> assignedColors = new ArrayList<>();
@@ -154,13 +172,13 @@ public class DashboardFragment extends Fragment {
         int colorGreen = Color.parseColor("#81B29A");
         int colorOrangeRed = Color.parseColor("#E07A5F");
 
-        if (total == 0 || completed == 0) {
-            entries.add(new PieEntry(100f, "INCOMPLETE"));
-            assignedColors.add(colorOrangeRed);
-        }
-        else if (completed == total) {
+        if (completed == total) {
             entries.add(new PieEntry(100f, "COMPLETED"));
             assignedColors.add(colorGreen);
+        }
+        else if (completed == 0) {
+            entries.add(new PieEntry(100f, "INCOMPLETE"));
+            assignedColors.add(colorOrangeRed);
         }
         else {
             float completedPercent = ((float) completed / total) * 100f;
@@ -182,16 +200,12 @@ public class DashboardFragment extends Fragment {
             @Override
             public String getFormattedValue(float value) {
                 int rounded = (int) Math.round(value);
-                if (total == 0 || rounded == 0) return "";
+                if (rounded == 0) return "";
                 return rounded + "%";
             }
         });
 
         PieData data = new PieData(dataSet);
-        if (total == 0 || completed == 0) {
-            data.setValueTextSize(0f);
-        }
-
         pieChartTodo.setData(data);
         pieChartTodo.setEntryLabelColor(Color.WHITE);
         pieChartTodo.setEntryLabelTextSize(10f);
@@ -228,25 +242,6 @@ public class DashboardFragment extends Fragment {
             holder.tvTitle.setText(rawTitleClean);
             holder.tvDate.setText(task.dateCreated);
 
-            try {
-                int parsedColor = Color.parseColor(displayColorHex);
-                holder.cardContainer.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
-
-                // CONTRAST ENGINE: Main dashboard elements updated with Red (#E63946) support layout styles
-                if (displayColorHex.equals("#3D405B") || displayColorHex.equals("#A06CD5") || displayColorHex.equals("#81B29A") || displayColorHex.equals("#E63946")) {
-                    holder.tvTitle.setTextColor(Color.WHITE);
-                    holder.tvDate.setTextColor(Color.LTGRAY);
-                    holder.tvPercent.setTextColor(Color.WHITE);
-                } else {
-                    holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
-                    holder.tvDate.setTextColor(Color.GRAY);
-                    holder.tvPercent.setTextColor(Color.parseColor("#3D405B"));
-                }
-            } catch (IllegalArgumentException e) {
-                holder.cardContainer.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
-                holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
-            }
-
             List<SubTaskItem> subTasks = db.appDao().getSubTasksForParent(task.taskId);
             int totalSubs = subTasks.size();
             int checkedSubs = 0;
@@ -262,6 +257,35 @@ public class DashboardFragment extends Fragment {
 
             holder.tvPercent.setText(String.format(Locale.getDefault(), "%d%%", itemProgress));
             holder.pbMeter.setProgress(itemProgress);
+
+            try {
+                int parsedColor = Color.parseColor(displayColorHex);
+                holder.cardContainer.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
+
+                boolean isDarkBg = displayColorHex.equals("#3D405B") ||
+                        displayColorHex.equals("#A06CD5") ||
+                        displayColorHex.equals("#81B29A") ||
+                        displayColorHex.equals("#E63946");
+
+                if (isDarkBg) {
+                    holder.tvTitle.setTextColor(Color.WHITE);
+                    holder.tvDate.setTextColor(Color.LTGRAY);
+                    holder.tvPercent.setTextColor(Color.WHITE);
+
+                    holder.pbMeter.setProgressTintList(ColorStateList.valueOf(Color.WHITE));
+                    holder.pbMeter.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4DFFFFFF")));
+                } else {
+                    holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
+                    holder.tvDate.setTextColor(Color.GRAY);
+                    holder.tvPercent.setTextColor(Color.parseColor("#3D405B"));
+
+                    holder.pbMeter.setProgressTintList(ColorStateList.valueOf(Color.parseColor("#6F4E37")));
+                    holder.pbMeter.setProgressBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0")));
+                }
+            } catch (IllegalArgumentException e) {
+                holder.cardContainer.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
+                holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
+            }
         }
 
         @Override

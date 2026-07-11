@@ -14,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,6 +30,7 @@ public class JournalFragment extends Fragment {
     private JournalAdapter adapter;
     private final List<TaskItem> journalList = new ArrayList<>();
     private SharedPreferences prefs;
+    private String lastKnownSearchQuery = "";
 
     @Nullable
     @Override
@@ -44,11 +46,30 @@ public class JournalFragment extends Fragment {
             rvJournalEntries.setAdapter(adapter);
         }
 
-        FloatingActionButton fabAdd = view.findViewById(R.id.fabAddJournalEntry);
+        FloatingActionButton fabAdd = view.findViewById(R.id.fabAddJournal);
         if (fabAdd != null) {
             fabAdd.setOnClickListener(v -> {
                 Intent intent = new Intent(getActivity(), JournalEditorActivity.class);
                 startActivity(intent);
+            });
+        }
+
+        SearchView svJournalSearch = view.findViewById(R.id.svJournalSearch);
+        if (svJournalSearch != null) {
+            svJournalSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    lastKnownSearchQuery = query.trim();
+                    loadJournalEntries();
+                    return true;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    lastKnownSearchQuery = newText.trim();
+                    loadJournalEntries();
+                    return true;
+                }
             });
         }
 
@@ -64,7 +85,13 @@ public class JournalFragment extends Fragment {
     private void loadJournalEntries() {
         journalList.clear();
         int activeUserId = prefs.getInt("userId", 1);
-        List<TaskItem> allItems = db.appDao().getAllTasks(activeUserId);
+
+        List<TaskItem> allItems;
+        if (lastKnownSearchQuery.isEmpty()) {
+            allItems = db.appDao().getAllTasks(activeUserId);
+        } else {
+            allItems = db.appDao().searchTasksByQuery(activeUserId, lastKnownSearchQuery);
+        }
 
         for (TaskItem item : allItems) {
             if (item.title != null && item.title.startsWith("JOURNAL_NOTE:")) {
@@ -119,7 +146,6 @@ public class JournalFragment extends Fragment {
                 int parsedColor = Color.parseColor(displayColorHex);
                 holder.cardRoot.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
 
-                // CONTRAST ENGINE: White text triggers synchronized for Red (#E63946)
                 if (displayColorHex.equals("#3D405B") || displayColorHex.equals("#A06CD5") || displayColorHex.equals("#81B29A") || displayColorHex.equals("#E63946")) {
                     holder.tvTitle.setTextColor(Color.WHITE);
                     holder.tvDate.setTextColor(Color.LTGRAY);
@@ -170,7 +196,6 @@ public class JournalFragment extends Fragment {
                 tvTitle = itemView.findViewById(R.id.tvTaskRowTitle);
                 tvDate = itemView.findViewById(R.id.tvTaskRowDate);
                 deleteClickBox = itemView.findViewById(R.id.flDeleteContainer);
-
                 cardRoot = itemView;
 
                 View progressMeter = itemView.findViewById(R.id.pbRowTaskMeter);
