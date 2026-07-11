@@ -1,5 +1,9 @@
 package com.example.projectstudybuddy1;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -31,7 +35,7 @@ public class FlashcardStudyActivity extends AppCompatActivity {
     private TextView tvHeaderTitle, tvDisplayContent, tvBadgeIndex;
     private EditText etInputQuestion, etInputAnswer, etDeckTitleEdit;
     private LinearLayout llEditorPanel;
-    private ImageButton btnToggleEdit;
+    private ImageButton btnToggleEdit, btnPrev, btnNext;
     private CardView cvSurface;
 
     @Override
@@ -50,8 +54,11 @@ public class FlashcardStudyActivity extends AppCompatActivity {
         etInputAnswer = findViewById(R.id.etEditAnswer);
         llEditorPanel = findViewById(R.id.llEditorWorkspacePanel);
         btnToggleEdit = findViewById(R.id.btnEditFlashcard);
-        ImageButton btnPrev = findViewById(R.id.btnPreviousCard);
-        ImageButton btnNext = findViewById(R.id.btnNextCard);
+
+        // Initializing navigation pointers
+        btnPrev = findViewById(R.id.btnPreviousCard);
+        btnNext = findViewById(R.id.btnNextCard);
+
         ImageButton btnDelete = findViewById(R.id.btnDeleteFlashcard);
         FloatingActionButton fabAddCard = findViewById(R.id.fabAddNewFlashcard);
         cvSurface = findViewById(R.id.cvFlashcardSurface);
@@ -127,6 +134,38 @@ public class FlashcardStudyActivity extends AppCompatActivity {
             tvHeaderTitle.setVisibility(View.VISIBLE);
 
             tvDisplayContent.setText(activeItem.question);
+        }
+
+        // Trigger dynamic gray-out verification state whenever a card is bound
+        updateNavigationArrowStates();
+    }
+
+    // FIXED: Added dynamic boundary evaluation to control button activation and alpha opacity
+    private void updateNavigationArrowStates() {
+        if (btnPrev == null || btnNext == null) return;
+
+        int totalCardsCount = currentDeckCards.size();
+
+        // 1. EVALUATE PREVIOUS (LEFT) ARROW
+        if (activeCardIndex <= 0 || totalCardsCount == 0 || activeEditorMode) {
+            btnPrev.setEnabled(false);
+            btnPrev.setAlpha(0.3f); // 30% Opacity grayed-out look
+            btnPrev.setImageTintList(ColorStateList.valueOf(Color.GRAY));
+        } else {
+            btnPrev.setEnabled(true);
+            btnPrev.setAlpha(1.0f); // Fully solid active look
+            btnPrev.setImageTintList(ColorStateList.valueOf(Color.parseColor("#81B29A")));
+        }
+
+        // 2. EVALUATE NEXT (RIGHT) ARROW
+        if (activeCardIndex >= totalCardsCount - 1 || totalCardsCount == 0 || activeEditorMode) {
+            btnNext.setEnabled(false);
+            btnNext.setAlpha(0.3f); // 30% Opacity grayed-out look
+            btnNext.setImageTintList(ColorStateList.valueOf(Color.GRAY));
+        } else {
+            btnNext.setEnabled(true);
+            btnNext.setAlpha(1.0f); // Fully solid active look
+            btnNext.setImageTintList(ColorStateList.valueOf(Color.parseColor("#81B29A")));
         }
     }
 

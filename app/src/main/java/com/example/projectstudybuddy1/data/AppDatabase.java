@@ -54,9 +54,12 @@ public abstract class AppDatabase extends RoomDatabase {
         @Query("SELECT * FROM tasks WHERE userId = :userId ORDER BY taskId DESC")
         List<TaskItem> getAllTasks(int userId);
 
-        // FIXED: Added missing tracking query requested by FlashcardStudyActivity
         @Query("SELECT * FROM tasks WHERE taskId = :taskId LIMIT 1")
         TaskItem getTaskById(int taskId);
+
+        // FIXED: Added wildcard query search feature into the correct active runtime AppDao definition
+        @Query("SELECT * FROM tasks WHERE userId = :userId AND title LIKE '%' || :searchQuery || '%' ORDER BY taskId DESC")
+        List<TaskItem> searchTasksByQuery(int userId, String searchQuery);
 
         // --- Keep-Style Checklist Operations ---
         @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -84,7 +87,6 @@ public abstract class AppDatabase extends RoomDatabase {
         @Delete
         void deleteCard(FlashcardItem card);
 
-        // FIXED: Cleaned up duplicate signatures to point directly to unified naming schema
         @Query("SELECT * FROM flashcard_cards WHERE parentDeckId = :deckId ORDER BY cardId ASC")
         List<FlashcardItem> getCardsForDeck(int deckId);
     }

@@ -17,11 +17,11 @@
             android:id="@+id/ivTaskProfileAvatar"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:src="@android:drawable/ic_menu_myplaces"
+            android:src="@android:drawable/ic_menu_sort_by_size"
             app:tint="@color/text_dark"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            android:contentDescription="Profile Avatar" />
+            android:contentDescription="List Icon" />
 
         <TextView
             android:id="@+id/tvTaskManagerHeaderTitle"
@@ -37,12 +37,24 @@
             app:layout_constraintStart_toEndOf="@id/ivTaskProfileAvatar"
             tools:ignore="HardcodedText" />
 
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/svTodoSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_rounded_card"
+            app:iconifiedByDefault="false"
+            app:queryHint="Search tasks..."
+            app:layout_constraintTop_toBottomOf="@id/ivTaskProfileAvatar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvTodoTasks"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="24dp"
-            app:layout_constraintTop_toBottomOf="@id/ivTaskProfileAvatar"
+            android:layout_marginTop="12dp"
+            app:layout_constraintTop_toBottomOf="@id/svTodoSearch"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
@@ -71,6 +83,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <View android:id="@+id/todoDotWhite" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#FFFFFF" />
         <View android:id="@+id/todoDotYellow" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#FDF0CD" />
         <View android:id="@+id/todoDotBlue" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#3D405B" />
         <View android:id="@+id/todoDotRed" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#E63946" />
@@ -156,6 +169,7 @@
                     android:id="@+id/tvEditedTimestamp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
                     android:text="Edited Just Now"
                     android:textColor="@color/text_hint_darker"
                     android:textSize="11sp"
@@ -165,9 +179,10 @@
                     android:id="@+id/btnKeepCloseAndSave"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Close"
                     android:layout_alignParentEnd="true"
-                    style="@android:style/Widget.DeviceDefault.Button.Borderless"
+                    android:text="Close"
+                    android:textColor="@color/text_dark"
+                    android:backgroundTint="#F4F1DE"
                     tools:ignore="HardcodedText" />
             </RelativeLayout>
         </LinearLayout>

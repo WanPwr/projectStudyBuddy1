@@ -3,6 +3,8 @@ package com.example.projectstudybuddy1;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -24,9 +26,10 @@ import java.util.List;
 public class FlashcardFragment extends Fragment {
 
     private AppDatabase db;
-    private FlashcardDeckAdapter adapter;
+    private DeckAdapter adapter;
     private final List<TaskItem> deckList = new ArrayList<>();
     private SharedPreferences prefs;
+    private String lastKnownSearchQuery = "";
 
     @Nullable
     @Override
@@ -35,18 +38,37 @@ public class FlashcardFragment extends Fragment {
         db = AppDatabase.getDatabase(requireContext());
         prefs = requireContext().getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
 
-        // FIX: Pointing to proper local flashcard layout resource layout elements
-        RecyclerView rvDecks = view.findViewById(R.id.rvFlashcardDecks);
-        if (rvDecks != null) {
-            rvDecks.setLayoutManager(new LinearLayoutManager(getContext()));
-            adapter = new FlashcardDeckAdapter();
-            rvDecks.setAdapter(adapter);
+        RecyclerView rvFlashcardDecks = view.findViewById(R.id.rvFlashcardDecks);
+        if (rvFlashcardDecks != null) {
+            rvFlashcardDecks.setLayoutManager(new LinearLayoutManager(getContext()));
+            adapter = new DeckAdapter();
+            rvFlashcardDecks.setAdapter(adapter);
         }
 
         FloatingActionButton fabAdd = view.findViewById(R.id.fabAddFlashcardDeck);
         if (fabAdd != null) {
-            // Optimization: Expression lambda syntax applied
-            fabAdd.setOnClickListener(v -> createNewDeckWorkspace());
+            fabAdd.setOnClickListener(v -> {
+                Toast.makeText(getContext(), "Create new deck", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        SearchView svCardsSearch = view.findViewById(R.id.svCardsSearch);
+        if (svCardsSearch != null) {
+            svCardsSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    lastKnownSearchQuery = query.trim();
+                    loadFlashcardDecks();
+                    return true;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    lastKnownSearchQuery = newText.trim();
+                    loadFlashcardDecks();
+                    return true;
+                }
+            });
         }
 
         return view;
@@ -61,32 +83,25 @@ public class FlashcardFragment extends Fragment {
     private void loadFlashcardDecks() {
         deckList.clear();
         int activeUserId = prefs.getInt("userId", 1);
-        List<TaskItem> allItems = db.appDao().getAllTasks(activeUserId);
+
+        List<TaskItem> allItems;
+        if (lastKnownSearchQuery.isEmpty()) {
+            allItems = db.appDao().getAllTasks(activeUserId);
+        } else {
+            allItems = db.appDao().searchTasksByQuery(activeUserId, lastKnownSearchQuery);
+        }
 
         for (TaskItem item : allItems) {
             if (item.title != null && item.title.startsWith("DECK_NOTE:")) {
                 deckList.add(item);
             }
         }
-
-        // Optimization: Removed notifyDataSetChanged() fallback to clear performance alerts
         if (adapter != null) {
-            adapter.notifyItemRangeChanged(0, deckList.size());
+            adapter.notifyDataSetChanged();
         }
     }
 
-    private void createNewDeckWorkspace() {
-        int activeUserId = prefs.getInt("userId", 1);
-        TaskItem newDeck = new TaskItem();
-        newDeck.title = "DECK_NOTE: Flashcard " + (deckList.size() + 1);
-        newDeck.userId = activeUserId;
-        newDeck.dateCreated = new java.text.SimpleDateFormat("dd/MM/yy HH:mm", java.util.Locale.getDefault()).format(new java.util.Date());
-
-        db.appDao().insertTask(newDeck);
-        loadFlashcardDecks();
-    }
-
-    private class FlashcardDeckAdapter extends RecyclerView.Adapter<FlashcardDeckAdapter.DeckViewHolder> {
+    private class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.DeckViewHolder> {
         @NonNull
         @Override
         public DeckViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -97,51 +112,25 @@ public class FlashcardFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull DeckViewHolder holder, int position) {
             TaskItem deck = deckList.get(position);
-
-            String cleanDeckTitle = deck.title.replace("DECK_NOTE:", "").trim();
-            holder.tvTitle.setText(cleanDeckTitle);
+            String rawTitleClean = deck.title.replace("DECK_NOTE:", "").trim();
+            holder.tvTitle.setText(rawTitleClean);
             holder.tvDate.setText(deck.dateCreated);
-
-            holder.itemView.setOnClickListener(v -> {
-                Intent intent = new Intent(getActivity(), FlashcardStudyActivity.class);
-                intent.putExtra("DECK_ID", deck.taskId);
-                intent.putExtra("DECK_NAME", cleanDeckTitle);
-                startActivity(intent);
-            });
-
-            if (holder.deleteClickBox != null) {
-                holder.deleteClickBox.setOnClickListener(v ->
-                        new AlertDialog.Builder(requireContext())
-                                .setTitle("Delete Flashcard Deck")
-                                .setMessage("Are you sure you want to delete this deck?")
-                                .setPositiveButton("Delete", (dialog, which) -> {
-                                    db.appDao().deleteTask(deck);
-                                    int currentPos = holder.getBindingAdapterPosition();
-                                    if (currentPos != RecyclerView.NO_POSITION && currentPos < deckList.size()) {
-                                        deckList.remove(currentPos);
-                                        // Optimization: Specific deletion animation handler injected
-                                        notifyItemRemoved(currentPos);
-                                    }
-                                    Toast.makeText(getContext(), "Deck deleted successfully", Toast.LENGTH_SHORT).show();
-                                })
-                                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
-                                .show()
-                );
-            }
+            holder.cardRoot.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
+            holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
+            holder.tvDate.setTextColor(Color.GRAY);
         }
 
-        @Override
-        public int getItemCount() { return deckList.size(); }
+        @Override public int getItemCount() { return deckList.size(); }
 
         class DeckViewHolder extends RecyclerView.ViewHolder {
             TextView tvTitle, tvDate;
-            View deleteClickBox;
+            View cardRoot;
 
             public DeckViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvTitle = itemView.findViewById(R.id.tvTaskRowTitle);
                 tvDate = itemView.findViewById(R.id.tvTaskRowDate);
-                deleteClickBox = itemView.findViewById(R.id.flDeleteContainer);
+                cardRoot = itemView;
 
                 View progressMeter = itemView.findViewById(R.id.pbRowTaskMeter);
                 if (progressMeter != null) progressMeter.setVisibility(View.GONE);
