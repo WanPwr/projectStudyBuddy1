@@ -9,9 +9,10 @@ import androidx.room.Query;
 import androidx.room.Insert;
 import androidx.room.Update;
 import androidx.room.Delete;
+import androidx.room.OnConflictStrategy;
 import java.util.List;
 
-@Database(entities = {TaskItem.class, JournalEntry.class, FlashcardItem.class}, version = 1, exportSchema = false)
+@Database(entities = {TaskItem.class, FlashcardItem.class, SubTaskItem.class}, version = 3, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract AppDao appDao();
@@ -24,6 +25,7 @@ public abstract class AppDatabase extends RoomDatabase {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                                     AppDatabase.class, "studybuddy_db")
                             .allowMainThreadQueries()
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }
@@ -33,15 +35,15 @@ public abstract class AppDatabase extends RoomDatabase {
 
     @Dao
     public interface AppDao {
-        // Task operations
-        @Query("SELECT * FROM tasks WHERE isRoutine = 0")
-        List<TaskItem> getAllTodos();
+        // --- Core Task & Journal Operations (User Filtered) ---
+        @Query("SELECT * FROM tasks WHERE isRoutine = 0 AND userId = :userId AND title NOT LIKE 'JOURNAL_NOTE:%' AND title NOT LIKE 'DECK_NOTE:%'")
+        List<TaskItem> getAllTodos(int userId);
 
-        @Query("SELECT * FROM tasks WHERE isRoutine = 1")
-        List<TaskItem> getAllRoutines();
+        @Query("SELECT * FROM tasks WHERE isRoutine = 1 AND userId = :userId")
+        List<TaskItem> getAllRoutines(int userId);
 
-        @Insert
-        void insertTask(TaskItem item);
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        long insertTask(TaskItem item);
 
         @Update
         void updateTask(TaskItem item);
@@ -49,30 +51,43 @@ public abstract class AppDatabase extends RoomDatabase {
         @Delete
         void deleteTask(TaskItem item);
 
-        // Journal operations
-        @Query("SELECT * FROM journal ORDER BY id DESC")
-        List<JournalEntry> getAllJournalEntries();
+        @Query("SELECT * FROM tasks WHERE userId = :userId ORDER BY taskId DESC")
+        List<TaskItem> getAllTasks(int userId);
 
-        @Insert
-        void insertJournal(JournalEntry entry);
+        @Query("SELECT * FROM tasks WHERE taskId = :taskId LIMIT 1")
+        TaskItem getTaskById(int taskId);
 
-        @Update
-        void updateJournal(JournalEntry entry);
+        // FIXED: Added wildcard query search feature into the correct active runtime AppDao definition
+        @Query("SELECT * FROM tasks WHERE userId = :userId AND title LIKE '%' || :searchQuery || '%' ORDER BY taskId DESC")
+        List<TaskItem> searchTasksByQuery(int userId, String searchQuery);
+
+        // --- Keep-Style Checklist Operations ---
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        void insertSubTask(SubTaskItem subTask);
 
         @Delete
-        void deleteJournal(JournalEntry entry);
+        void deleteSubTask(SubTaskItem subTask);
 
-        // Flashcard operations
-        @Query("SELECT DISTINCT deckName FROM flashcards")
-        List<String> getUniqueDecks();
+        @Query("SELECT * FROM sub_tasks WHERE parentTaskId = :parentId")
+        List<SubTaskItem> getSubTasksForParent(int parentId);
 
-        @Query("SELECT * FROM flashcards WHERE deckName = :deck")
-        List<FlashcardItem> getCardsFromDeck(String deck);
+        @Query("SELECT COUNT(*) FROM sub_tasks")
+        int getTotalSubTaskCount();
 
-        @Insert
+        @Query("SELECT COUNT(*) FROM sub_tasks WHERE isChecked = 1")
+        int getCheckedSubTaskCount();
+
+        // --- Flashcard Operations ---
+        @Query("SELECT * FROM flashcard_cards")
+        List<FlashcardItem> getUniqueDecks();
+
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
         void insertCard(FlashcardItem card);
 
         @Delete
         void deleteCard(FlashcardItem card);
+
+        @Query("SELECT * FROM flashcard_cards WHERE parentDeckId = :deckId ORDER BY cardId ASC")
+        List<FlashcardItem> getCardsForDeck(int deckId);
     }
 }

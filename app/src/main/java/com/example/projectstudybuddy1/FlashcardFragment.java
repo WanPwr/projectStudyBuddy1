@@ -1,161 +1,141 @@
 package com.example.projectstudybuddy1;
 
-import android.app.AlertDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.projectstudybuddy1.data.AppDatabase;
-import com.example.projectstudybuddy1.data.FlashcardItem;
+import com.example.projectstudybuddy1.data.TaskItem;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FlashcardFragment extends Fragment {
+
     private AppDatabase db;
     private DeckAdapter adapter;
-    private List<String> deckList = new ArrayList<>();
-
-    private View viewDecks, viewStudy;
-    private TextView tvDeckTitle, tvCardText;
-    private List<FlashcardItem> currentSessionCards = new ArrayList<>();
-    private int cardIndex = 0;
-    private boolean showingQuestion = true;
+    private final List<TaskItem> deckList = new ArrayList<>();
+    private SharedPreferences prefs;
+    private String lastKnownSearchQuery = "";
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_flashcard, container, false);
+        View view = inflater.inflate(R.layout.fragment_flashcard, container, false);
         db = AppDatabase.getDatabase(requireContext());
+        prefs = requireContext().getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
 
-        viewDecks = v.findViewById(R.id.viewDeckSelection);
-        viewStudy = v.findViewById(R.id.viewStudyEngine);
-        tvDeckTitle = v.findViewById(R.id.tvDeckSessionTitle);
-        tvCardText = v.findViewById(R.id.tvCardContent);
+        RecyclerView rvFlashcardDecks = view.findViewById(R.id.rvFlashcardDecks);
+        if (rvFlashcardDecks != null) {
+            rvFlashcardDecks.setLayoutManager(new LinearLayoutManager(getContext()));
+            adapter = new DeckAdapter();
+            rvFlashcardDecks.setAdapter(adapter);
+        }
 
-        RecyclerView rv = v.findViewById(R.id.rvDecks);
-        FloatingActionButton fab = v.findViewById(R.id.fabAddDeckCard);
-        Button btnNext = v.findViewById(R.id.btnNextCard);
-        v.findViewById(R.id.btnStudyBack).setOnClickListener(view -> closeStudySession());
+        FloatingActionButton fabAdd = view.findViewById(R.id.fabAddFlashcardDeck);
+        if (fabAdd != null) {
+            fabAdd.setOnClickListener(v -> {
+                Toast.makeText(getContext(), "Create new deck", Toast.LENGTH_SHORT).show();
+            });
+        }
 
-        rv.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new DeckAdapter();
-        rv.setAdapter(adapter);
-
-        fab.setOnClickListener(view -> displayCreationDialog());
-
-        v.findViewById(R.id.cardWorkspace).setOnClickListener(view -> {
-            if (!currentSessionCards.isEmpty()) {
-                if (showingQuestion) {
-                    tvCardText.setText(currentSessionCards.get(cardIndex).answer);
-                    tvCardText.setTextColor(android.graphics.Color.parseColor("#81B29A")); // Green indicator flip
-                } else {
-                    tvCardText.setText(currentSessionCards.get(cardIndex).question);
-                    tvCardText.setTextColor(android.graphics.Color.parseColor("#3D405B"));
+        SearchView svCardsSearch = view.findViewById(R.id.svCardsSearch);
+        if (svCardsSearch != null) {
+            svCardsSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    lastKnownSearchQuery = query.trim();
+                    loadFlashcardDecks();
+                    return true;
                 }
-                showingQuestion = !showingQuestion;
-            }
-        });
 
-        btnNext.setOnClickListener(view -> {
-            if (!currentSessionCards.isEmpty()) {
-                cardIndex = (cardIndex + 1) % currentSessionCards.size();
-                presentCardState();
-            }
-        });
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    lastKnownSearchQuery = newText.trim();
+                    loadFlashcardDecks();
+                    return true;
+                }
+            });
+        }
 
-        loadDecks();
-        return v;
+        return view;
     }
 
-    private void loadDecks() {
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadFlashcardDecks();
+    }
+
+    private void loadFlashcardDecks() {
         deckList.clear();
-        deckList.addAll(db.appDao().getUniqueDecks());
-        adapter.notifyDataSetChanged();
-    }
+        int activeUserId = prefs.getInt("userId", 1);
 
-    private void initiateStudySession(String deckName) {
-        currentSessionCards.clear();
-        currentSessionCards.addAll(db.appDao().getCardsFromDeck(deckName));
-        if(currentSessionCards.isEmpty()) return;
+        List<TaskItem> allItems;
+        if (lastKnownSearchQuery.isEmpty()) {
+            allItems = db.appDao().getAllTasks(activeUserId);
+        } else {
+            allItems = db.appDao().searchTasksByQuery(activeUserId, lastKnownSearchQuery);
+        }
 
-        cardIndex = 0;
-        tvDeckTitle.setText(deckName.toUpperCase());
-        viewDecks.setVisibility(View.GONE);
-        viewStudy.setVisibility(View.VISIBLE);
-        presentCardState();
-    }
-
-    private void presentCardState() {
-        showingQuestion = true;
-        tvCardText.setText(currentSessionCards.get(cardIndex).question);
-        tvCardText.setTextColor(android.graphics.Color.parseColor("#3D405B"));
-    }
-
-    private void closeStudySession() {
-        viewStudy.setVisibility(View.GONE);
-        viewDecks.setVisibility(View.VISIBLE);
-        loadDecks();
-    }
-
-    private void displayCreationDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle("New Flashcard Object");
-
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(40, 20, 40, 20);
-
-        final EditText etDeck = new EditText(getContext()); etDeck.setHint("Deck Subject Tag..."); layout.addView(etDeck);
-        final EditText etQ = new EditText(getContext()); etQ.setHint("Question text..."); layout.addView(etQ);
-        final EditText etA = new EditText(getContext()); etA.setHint("Answer field..."); layout.addView(etA);
-        builder.setView(layout);
-
-        builder.setPositiveButton("Create", (dialog, which) -> {
-            String d = etDeck.getText().toString().trim();
-            String q = etQ.getText().toString().trim();
-            String a = etA.getText().toString().trim();
-            if(!d.isEmpty() && !q.isEmpty() && !a.isEmpty()){
-                FlashcardItem item = new FlashcardItem();
-                item.deckName = d;
-                item.question = q;
-                item.answer = a;
-                db.appDao().insertCard(item);
-                loadDecks();
+        for (TaskItem item : allItems) {
+            if (item.title != null && item.title.startsWith("DECK_NOTE:")) {
+                deckList.add(item);
             }
-        });
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+        }
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
     }
 
     private class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.DeckViewHolder> {
-        @NonNull @Override
+        @NonNull
+        @Override
         public DeckViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_deck_row, parent, false);
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_task_row, parent, false);
             return new DeckViewHolder(v);
         }
+
         @Override
-        public void onBindViewHolder(@NonNull DeckViewHolder holder, int pos) {
-            String current = deckList.get(pos);
-            holder.tvName.setText(current);
-            holder.itemView.setOnClickListener(v -> initiateStudySession(current));
+        public void onBindViewHolder(@NonNull DeckViewHolder holder, int position) {
+            TaskItem deck = deckList.get(position);
+            String rawTitleClean = deck.title.replace("DECK_NOTE:", "").trim();
+            holder.tvTitle.setText(rawTitleClean);
+            holder.tvDate.setText(deck.dateCreated);
+            holder.cardRoot.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
+            holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
+            holder.tvDate.setTextColor(Color.GRAY);
         }
+
         @Override public int getItemCount() { return deckList.size(); }
 
         class DeckViewHolder extends RecyclerView.ViewHolder {
-            TextView tvName;
+            TextView tvTitle, tvDate;
+            View cardRoot;
+
             public DeckViewHolder(@NonNull View itemView) {
                 super(itemView);
-                tvName = itemView.findViewById(R.id.tvDeckNameDisplay);
+                tvTitle = itemView.findViewById(R.id.tvTaskRowTitle);
+                tvDate = itemView.findViewById(R.id.tvTaskRowDate);
+                cardRoot = itemView;
+
+                View progressMeter = itemView.findViewById(R.id.pbRowTaskMeter);
+                if (progressMeter != null) progressMeter.setVisibility(View.GONE);
+                View progressText = itemView.findViewById(R.id.tvRowTaskPercentage);
+                if (progressText != null) progressText.setVisibility(View.GONE);
             }
         }
     }

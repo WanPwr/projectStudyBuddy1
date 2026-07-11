@@ -11,15 +11,49 @@ import java.util.List;
 @Dao
 public interface StudyBuddyDao {
 
-    @Query("SELECT * FROM todo_list WHERE userId = :userId ORDER BY createdAt DESC")
-    List<TodoEntity> getAllTasksForUser(int userId);
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertTask(TodoEntity todo);
+    long insertTask(TaskItem task);
 
     @Update
-    void updateTask(TodoEntity todo);
+    void updateTask(TaskItem task);
 
     @Delete
-    void deleteTask(TodoEntity todo);
+    void deleteTask(TaskItem task);
+
+    @Query("SELECT * FROM tasks WHERE userId = :userId ORDER BY taskId DESC")
+    List<TaskItem> getAllTasks(int userId);
+
+    @Query("SELECT * FROM tasks WHERE taskId = :taskId LIMIT 1")
+    TaskItem getTaskById(int taskId);
+
+    @Query("SELECT * FROM tasks ORDER BY taskId DESC")
+    List<TaskItem> getAllTasksFallback();
+
+    // FIXED: Added wildcard search string support directly within your primary data access object interface
+    @Query("SELECT * FROM tasks WHERE userId = :userId AND title LIKE '%' || :searchQuery || '%' ORDER BY taskId DESC")
+    List<TaskItem> searchTasksByQuery(int userId, String searchQuery);
+
+    // ==========================================================
+    // NESTED SUB-TASK WORKSPACES
+    // ==========================================================
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertSubTask(SubTaskItem subTask);
+
+    @Delete
+    void deleteSubTask(SubTaskItem subTask);
+
+    @Query("SELECT * FROM sub_tasks WHERE parentTaskId = :parentId")
+    List<SubTaskItem> getSubTasksForParent(int parentId);
+
+    // ==========================================================
+    // FLASHCARD CARD ENGINE WORKSPACES
+    // ==========================================================
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertCard(FlashcardItem card);
+
+    @Delete
+    void deleteCard(FlashcardItem card);
+
+    @Query("SELECT * FROM flashcard_cards WHERE parentDeckId = :deckId ORDER BY cardId ASC")
+    List<FlashcardItem> getCardsForDeck(int deckId);
 }
