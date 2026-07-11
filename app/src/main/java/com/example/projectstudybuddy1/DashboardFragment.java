@@ -3,6 +3,7 @@ package com.example.projectstudybuddy1;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -20,7 +21,6 @@ import com.example.projectstudybuddy1.data.AppDatabase;
 import com.example.projectstudybuddy1.data.TaskItem;
 import com.example.projectstudybuddy1.data.SubTaskItem;
 
-// MPAndroidChart Library Components
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
@@ -104,9 +104,7 @@ public class DashboardFragment extends Fragment {
     private void loadDashboardMetrics() {
         pureTodoList.clear();
 
-        // Retrieve current active user integer ID from preferences context
         int activeUserId = prefs.getInt("userId", 1);
-
         List<TaskItem> allItems = db.appDao().getAllTasks(activeUserId);
 
         int totalSubTasksCount = 0;
@@ -213,8 +211,41 @@ public class DashboardFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull DashboardViewHolder holder, int position) {
             TaskItem task = pureTodoList.get(position);
-            holder.tvTitle.setText(task.title);
+
+            String displayColorHex = "#FFFFFF";
+            String rawTitleClean = task.title != null ? task.title : "";
+
+            if (rawTitleClean.contains("||COLOR_SEP||")) {
+                String[] colorSplit = rawTitleClean.split("\\|\\|COLOR_SEP\\|\\|");
+                if (colorSplit.length > 0) {
+                    rawTitleClean = colorSplit[0].trim();
+                }
+                if (colorSplit.length > 1) {
+                    displayColorHex = colorSplit[1].trim();
+                }
+            }
+
+            holder.tvTitle.setText(rawTitleClean);
             holder.tvDate.setText(task.dateCreated);
+
+            try {
+                int parsedColor = Color.parseColor(displayColorHex);
+                holder.cardContainer.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
+
+                // CONTRAST ENGINE: Main dashboard elements updated with Red (#E63946) support layout styles
+                if (displayColorHex.equals("#3D405B") || displayColorHex.equals("#A06CD5") || displayColorHex.equals("#81B29A") || displayColorHex.equals("#E63946")) {
+                    holder.tvTitle.setTextColor(Color.WHITE);
+                    holder.tvDate.setTextColor(Color.LTGRAY);
+                    holder.tvPercent.setTextColor(Color.WHITE);
+                } else {
+                    holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
+                    holder.tvDate.setTextColor(Color.GRAY);
+                    holder.tvPercent.setTextColor(Color.parseColor("#3D405B"));
+                }
+            } catch (IllegalArgumentException e) {
+                holder.cardContainer.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
+                holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
+            }
 
             List<SubTaskItem> subTasks = db.appDao().getSubTasksForParent(task.taskId);
             int totalSubs = subTasks.size();
@@ -240,6 +271,7 @@ public class DashboardFragment extends Fragment {
             TextView tvTitle, tvDate, tvPercent;
             ProgressBar pbMeter;
             View ivDeleteIcon;
+            View cardContainer;
 
             public DashboardViewHolder(@NonNull View itemView) {
                 super(itemView);
@@ -247,6 +279,8 @@ public class DashboardFragment extends Fragment {
                 tvDate = itemView.findViewById(R.id.tvTaskRowDate);
                 tvPercent = itemView.findViewById(R.id.tvRowTaskPercentage);
                 pbMeter = itemView.findViewById(R.id.pbRowTaskMeter);
+
+                cardContainer = itemView;
 
                 ivDeleteIcon = itemView.findViewById(R.id.ivTaskRowDelete);
                 if (ivDeleteIcon != null) ivDeleteIcon.setVisibility(View.GONE);

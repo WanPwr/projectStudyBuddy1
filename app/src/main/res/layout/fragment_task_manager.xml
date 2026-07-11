@@ -60,20 +60,39 @@
             android:contentDescription="Add Task" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <LinearLayout
+        android:id="@+id/layoutTodoColorPicker"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <View android:id="@+id/todoDotYellow" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#FDF0CD" />
+        <View android:id="@+id/todoDotBlue" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#3D405B" />
+        <View android:id="@+id/todoDotRed" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#E63946" />
+        <View android:id="@+id/todoDotGreen" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#81B29A" />
+        <View android:id="@+id/todoDotPurple" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#A06CD5" />
+    </LinearLayout>
+
     <androidx.cardview.widget.CardView
         android:id="@+id/cardKeepEditor"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="16dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="6dp"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layoutTodoColorPicker"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
+            android:id="@+id/layoutTodoDialogWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -93,7 +112,7 @@
                     android:textStyle="bold"
                     android:textSize="18sp"
                     android:textColor="@color/text_dark"
-                    android:background="@android:drawable/edit_text"
+                    android:background="@drawable/bg_rounded_card"
                     android:padding="10dp"
                     android:importantForAutofill="no"
                     android:inputType="textCapSentences"

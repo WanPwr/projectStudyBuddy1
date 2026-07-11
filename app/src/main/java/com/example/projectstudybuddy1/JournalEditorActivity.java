@@ -2,7 +2,10 @@ package com.example.projectstudybuddy1;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -23,6 +26,8 @@ public class JournalEditorActivity extends AppCompatActivity {
     private boolean isEditMode = false;
     private SharedPreferences prefs;
 
+    private String currentSelectedColorHex = "#FFFFFF";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +44,8 @@ public class JournalEditorActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
         fabSave.setOnClickListener(v -> saveJournalWorkspaceData());
 
+        setupColorClickListeners();
+
         int existingId = getIntent().getIntExtra("JOURNAL_ID", -1);
         int activeUserId = prefs.getInt("userId", 1);
 
@@ -51,7 +58,20 @@ public class JournalEditorActivity extends AppCompatActivity {
                     if (activeEntry.title != null) {
                         String rawTitleClean = activeEntry.title.replace("JOURNAL_NOTE:", "").trim();
 
-                        // RESTORE SPLIT FIELDS: Decouple title versus body text input structures safely
+                        if (rawTitleClean.contains("||COLOR_SEP||")) {
+                            String[] colorSplit = rawTitleClean.split("\\|\\|COLOR_SEP\\|\\|");
+                            if (colorSplit.length > 0) {
+                                rawTitleClean = colorSplit[0].trim();
+                            }
+                            if (colorSplit.length > 1) {
+                                currentSelectedColorHex = colorSplit[1].trim();
+                                if (currentSelectedColorHex.equals("#E07A5F")) {
+                                    currentSelectedColorHex = "#FDF0CD";
+                                }
+                                applyVisualBackgroundTint(currentSelectedColorHex);
+                            }
+                        }
+
                         if (rawTitleClean.contains("||CONTENT_SEP||")) {
                             String[] segments = rawTitleClean.split("\\|\\|CONTENT_SEP\\|\\|");
                             etTitle.setText(segments[0].trim());
@@ -75,6 +95,38 @@ public class JournalEditorActivity extends AppCompatActivity {
             activeEntry.isPinned = false;
             activeEntry.isRoutine = false;
             activeEntry.completed = false;
+            applyVisualBackgroundTint(currentSelectedColorHex);
+        }
+    }
+
+    private void setupColorClickListeners() {
+        if (findViewById(R.id.dotYellow) != null) {
+            findViewById(R.id.dotYellow).setOnClickListener(v -> applyVisualBackgroundTint("#FDF0CD"));
+        }
+        findViewById(R.id.dotBlue).setOnClickListener(v -> applyVisualBackgroundTint("#3D405B"));
+        findViewById(R.id.dotRed).setOnClickListener(v -> applyVisualBackgroundTint("#E63946"));
+        findViewById(R.id.dotGreen).setOnClickListener(v -> applyVisualBackgroundTint("#81B29A"));
+        findViewById(R.id.dotPurple).setOnClickListener(v -> applyVisualBackgroundTint("#A06CD5"));
+    }
+
+    private void applyVisualBackgroundTint(String hexColor) {
+        currentSelectedColorHex = hexColor;
+        int parsedColor = Color.parseColor(hexColor);
+
+        etTitle.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
+        etBody.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
+
+        // CONTRAST ENGINE: Dynamic high-contrast white toggle including Red (#E63946)
+        if (hexColor.equals("#3D405B") || hexColor.equals("#A06CD5") || hexColor.equals("#81B29A") || hexColor.equals("#E63946")) {
+            etTitle.setTextColor(Color.WHITE);
+            etBody.setTextColor(Color.WHITE);
+            etTitle.setHintTextColor(Color.parseColor("#E0E0E0"));
+            etBody.setHintTextColor(Color.parseColor("#E0E0E0"));
+        } else {
+            etTitle.setTextColor(Color.parseColor("#3D405B"));
+            etBody.setTextColor(Color.parseColor("#3D405B"));
+            etTitle.setHintTextColor(Color.GRAY);
+            etBody.setHintTextColor(Color.GRAY);
         }
     }
 
@@ -86,8 +138,7 @@ public class JournalEditorActivity extends AppCompatActivity {
             titleInput = "Untitled Entry";
         }
 
-        // SERIALIZE BOTH FIELDS TOGETHER: Pack title and body securely inside the entity string model
-        activeEntry.title = "JOURNAL_NOTE: " + titleInput + " ||CONTENT_SEP|| " + bodyInput;
+        activeEntry.title = "JOURNAL_NOTE: " + titleInput + " ||CONTENT_SEP|| " + bodyInput + " ||COLOR_SEP|| " + currentSelectedColorHex;
         activeEntry.isRoutine = false;
         activeEntry.completed = false;
 

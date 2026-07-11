@@ -4,7 +4,7 @@
 
     <string name="menu_home">Home</string>
     <string name="menu_timer">Timer</string>
-    <string name="menu_tasks">Tasks</string>
+    <string name="menu_tasks">To-Do</string>
     <string name="menu_journal">Journal</string>
     <string name="menu_cards">Cards</string>
 

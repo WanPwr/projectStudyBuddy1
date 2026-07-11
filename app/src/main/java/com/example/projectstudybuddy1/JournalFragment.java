@@ -3,6 +3,8 @@ package com.example.projectstudybuddy1;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -86,7 +88,21 @@ public class JournalFragment extends Fragment {
         public void onBindViewHolder(@NonNull JournalViewHolder holder, int position) {
             TaskItem entry = journalList.get(position);
 
+            String displayColorHex = "#FFFFFF";
             String rawTitleClean = entry.title.replace("JOURNAL_NOTE:", "").trim();
+
+            if (rawTitleClean.contains("||COLOR_SEP||")) {
+                String[] colorSplit = rawTitleClean.split("\\|\\|COLOR_SEP\\|\\|");
+                if (colorSplit.length > 0) {
+                    rawTitleClean = colorSplit[0].trim();
+                }
+                if (colorSplit.length > 1) {
+                    displayColorHex = colorSplit[1].trim();
+                    if (displayColorHex.equals("#E07A5F")) {
+                        displayColorHex = "#FDF0CD";
+                    }
+                }
+            }
 
             String userCleanTitle;
             if (rawTitleClean.contains("||CONTENT_SEP||")) {
@@ -98,6 +114,23 @@ public class JournalFragment extends Fragment {
 
             holder.tvTitle.setText(userCleanTitle);
             holder.tvDate.setText(entry.dateCreated);
+
+            try {
+                int parsedColor = Color.parseColor(displayColorHex);
+                holder.cardRoot.setBackgroundTintList(ColorStateList.valueOf(parsedColor));
+
+                // CONTRAST ENGINE: White text triggers synchronized for Red (#E63946)
+                if (displayColorHex.equals("#3D405B") || displayColorHex.equals("#A06CD5") || displayColorHex.equals("#81B29A") || displayColorHex.equals("#E63946")) {
+                    holder.tvTitle.setTextColor(Color.WHITE);
+                    holder.tvDate.setTextColor(Color.LTGRAY);
+                } else {
+                    holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
+                    holder.tvDate.setTextColor(Color.GRAY);
+                }
+            } catch (IllegalArgumentException e) {
+                holder.cardRoot.setBackgroundTintList(ColorStateList.valueOf(Color.WHITE));
+                holder.tvTitle.setTextColor(Color.parseColor("#3D405B"));
+            }
 
             holder.itemView.setOnClickListener(v -> {
                 Intent intent = new Intent(getActivity(), JournalEditorActivity.class);
@@ -130,12 +163,15 @@ public class JournalFragment extends Fragment {
         class JournalViewHolder extends RecyclerView.ViewHolder {
             TextView tvTitle, tvDate;
             View deleteClickBox;
+            View cardRoot;
 
             public JournalViewHolder(@NonNull View itemView) {
                 super(itemView);
                 tvTitle = itemView.findViewById(R.id.tvTaskRowTitle);
                 tvDate = itemView.findViewById(R.id.tvTaskRowDate);
                 deleteClickBox = itemView.findViewById(R.id.flDeleteContainer);
+
+                cardRoot = itemView;
 
                 View progressMeter = itemView.findViewById(R.id.pbRowTaskMeter);
                 if (progressMeter != null) progressMeter.setVisibility(View.GONE);
