@@ -174,10 +174,8 @@ public class TimerFragment extends Fragment {
 
             @Override
             public void onFinish() {
-                // FIXED CRASH: Structural Fragment context safety check layer
                 if (getActivity() == null || !isAdded()) return;
 
-                // Enforce all execution processes back onto the UI Main Loop Thread
                 getActivity().runOnUiThread(() -> {
                     isTimerRunning = false;
                     isTimerPaused = false;
@@ -192,22 +190,8 @@ public class TimerFragment extends Fragment {
                     tvUpperHint.setVisibility(View.VISIBLE);
                     tvLowerHint.setVisibility(View.VISIBLE);
 
-                    // Safe Alarm Ringtone Player
-                    try {
-                        Context safeContext = requireContext();
-                        android.net.Uri alertSoundUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM);
-                        if (alertSoundUri == null) {
-                            alertSoundUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_NOTIFICATION);
-                        }
-                        android.media.Ringtone ringtoneEngine = android.media.RingtoneManager.getRingtone(safeContext, alertSoundUri);
-                        if (ringtoneEngine != null) {
-                            ringtoneEngine.play();
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                    // Safe Intent Activity Switch
+                    // FIXED: Removed fragment audio engine invocation completely.
+                    // This avoids duplicate audio allocations running concurrently with the Activity.
                     try {
                         Intent intent = new Intent(requireContext(), TimerEndedActivity.class);
                         startActivity(intent);

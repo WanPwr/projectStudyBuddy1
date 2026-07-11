@@ -18,6 +18,26 @@
         app:layout_constraintStart_toStartOf="parent"
         android:contentDescription="Go Back" />
 
+
+    <LinearLayout
+        android:id="@+id/layoutJournalColorPicker"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginHorizontal="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/btnJournalEditorBack"
+        app:layout_constraintStart_toEndOf="@id/btnJournalEditorBack"
+        app:layout_constraintEnd_toStartOf="@id/fabSaveJournalEntry">
+
+        <View android:id="@+id/dotYellow" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#FDF0CD" />
+        <View android:id="@+id/dotBlue" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#3D405B" />
+        <View android:id="@+id/dotRed" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#E63946" />
+        <View android:id="@+id/dotGreen" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#81B29A" />
+        <View android:id="@+id/dotPurple" android:layout_width="24dp" android:layout_height="24dp" android:layout_margin="6dp" android:background="@drawable/circle_badge" android:backgroundTint="#A06CD5" />
+    </LinearLayout>
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabSaveJournalEntry"
         android:layout_width="wrap_content"
@@ -27,6 +47,7 @@
         app:tint="@android:color/white"
         app:fabSize="mini"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/btnJournalEditorBack"
         app:layout_constraintEnd_toEndOf="parent"
         android:contentDescription="Save Entry" />
 
@@ -40,7 +61,7 @@
         android:textColor="@color/text_dark"
         android:textSize="20sp"
         android:textStyle="bold"
-        android:background="@android:drawable/edit_text"
+        android:background="@drawable/bg_rounded_card"
         android:padding="12dp"
         android:inputType="textCapWords"
         android:importantForAutofill="no"
@@ -58,7 +79,7 @@
         android:textColor="@color/text_dark"
         android:textSize="16sp"
         android:gravity="top|start"
-        android:background="@android:drawable/edit_text"
+        android:background="@drawable/bg_rounded_card"
         android:padding="16dp"
         android:inputType="textMultiLine|textCapSentences"
         android:importantForAutofill="no"
