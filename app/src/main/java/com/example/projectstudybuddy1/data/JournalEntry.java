@@ -9,6 +9,9 @@ public class JournalEntry {
     public int id;
 
     public String title;
-    public String content;
-    public String timestamp;
+    public String content; // or body
+    public String dateCreated;
+
+    // FIX COUPLING: Add this field to assign the journal to your logged-in user
+    public int userId;
 }
