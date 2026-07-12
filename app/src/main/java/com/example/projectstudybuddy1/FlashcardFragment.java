@@ -1,306 +1,211 @@
 package com.example.projectstudybuddy1;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.projectstudybuddy1.data.AppDatabase;
-import com.example.projectstudybuddy1.data.FlashcardItem;
+import com.example.projectstudybuddy1.data.TaskItem;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class FlashcardFragment extends Fragment {
     private AppDatabase db;
     private DeckAdapter adapter;
-    private final List<String> deckList = new ArrayList<>();
-
-    private View viewDecks, viewStudy;
-    private TextView tvCardStaticText;
-    private EditText etDeckTitle, etQuestionInput, etAnswerInput;
-    private LinearLayout layoutEditFields;
-    private ImageButton btnEditMode, btnNext, btnPrev;
-    private android.widget.ImageView ivCheckedBadge;
-
-    private final List<FlashcardItem> currentSessionCards = new ArrayList<>();
-    private int cardIndex = 0;
-    private boolean showingQuestion = true;
-    private boolean isEditWorkspaceActive = false;
-    private String currentSelectedDeckName = "";
+    private final List<TaskItem> deckList = new ArrayList<>();
+    private SharedPreferences prefs;
+    private String lastKnownSearchQuery = "";
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_flashcard, container, false);
         db = AppDatabase.getDatabase(requireContext());
+        prefs = requireContext().getSharedPreferences("StudyBuddyPrefs", Context.MODE_PRIVATE);
 
-        // Bind layout structures
-        viewDecks = v.findViewById(R.id.viewDeckSelection);
-        viewStudy = v.findViewById(R.id.viewStudyEngine);
-        tvCardStaticText = v.findViewById(R.id.tvCardContent);
-        etDeckTitle = v.findViewById(R.id.etFigmaDeckTitle);
+        RecyclerView rv = v.findViewById(R.id.rvFlashcardDecks);
+        FloatingActionButton fab = v.findViewById(R.id.fabAddFlashcardDeck);
 
-        layoutEditFields = v.findViewById(R.id.layoutEditFields);
-        etQuestionInput = v.findViewById(R.id.etFigmaQuestionInput);
-        etAnswerInput = v.findViewById(R.id.etFigmaAnswerInput);
+        if (rv != null) {
+            rv.setLayoutManager(new LinearLayoutManager(getContext()));
+            adapter = new DeckAdapter();
+            rv.setAdapter(adapter);
+        }
 
-        btnEditMode = v.findViewById(R.id.btnEditModeToggle);
-        ivCheckedBadge = v.findViewById(R.id.ivCheckStatusBadge);
+        if (fab != null) {
+            fab.setOnClickListener(view -> displayCreationDialog());
+        }
 
-        RecyclerView rv = v.findViewById(R.id.rvDecks);
-        FloatingActionButton fab = v.findViewById(R.id.fabAddDeckCard);
-        btnPrev = v.findViewById(R.id.btnFigmaPrevCard);
-        btnNext = v.findViewById(R.id.btnFigmaNextCard);
-
-        rv.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new DeckAdapter();
-        rv.setAdapter(adapter);
-
-        // Core directory interactions
-        v.findViewById(R.id.btnStudyBack).setOnClickListener(view -> closeStudySession());
-        fab.setOnClickListener(view -> createNewBlankFigmaDeck());
-
-        // STUDY STATE: Smooth interactive Tap-to-flip controller engine
-        v.findViewById(R.id.cardWorkspace).setOnClickListener(view -> {
-            if (!currentSessionCards.isEmpty() && !isEditWorkspaceActive) {
-                if (showingQuestion) {
-                    // Reveal Answer card back
-                    tvCardStaticText.setText(currentSessionCards.get(cardIndex).answer);
-                    tvCardStaticText.setTextColor(android.graphics.Color.parseColor("#81B29A")); // Mint Green
-                } else {
-                    // Reveal Question card front
-                    tvCardStaticText.setText(currentSessionCards.get(cardIndex).question);
-                    tvCardStaticText.setTextColor(android.graphics.Color.parseColor("#3D405B")); // Dark Navy
+        SearchView svCardsSearch = v.findViewById(R.id.svCardsSearch);
+        if (svCardsSearch != null) {
+            svCardsSearch.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    lastKnownSearchQuery = query.trim();
+                    loadDecks();
+                    return true;
                 }
-                showingQuestion = !showingQuestion;
-            }
-        });
 
-        // LEFT ARROW: Loop backward safely with a strict baseline index boundary guard
-        btnPrev.setOnClickListener(view -> {
-            if (!currentSessionCards.isEmpty() && cardIndex > 0) {
-                saveCurrentCardStateIfEditing();
-                cardIndex--;
-                presentCardState();
-            }
-        });
-
-        // RIGHT ACTION BUTTON: Next card index navigation or placeholder generation at the end
-        btnNext.setOnClickListener(view -> {
-            if (!currentSessionCards.isEmpty()) {
-                // Check if user hits the right button while on the LAST card item
-                if (cardIndex == currentSessionCards.size() - 1) {
-                    saveCurrentCardStateIfEditing();
-
-                    // Generate new placeholder row item directly into Room Database
-                    FlashcardItem newTemplateCard = new FlashcardItem();
-                    newTemplateCard.deckName = currentSelectedDeckName;
-                    newTemplateCard.question = "QUESTION";
-                    newTemplateCard.answer = "ANSWER";
-                    db.appDao().insertCard(newTemplateCard);
-
-                    // Refresh localized device stack lists
-                    currentSessionCards.clear();
-                    currentSessionCards.addAll(db.appDao().getCardsFromDeck(currentSelectedDeckName));
-                    cardIndex = currentSessionCards.size() - 1;
-
-                    // Drop layout straight forward into Edit Mode
-                    isEditWorkspaceActive = true;
-                    btnEditMode.setVisibility(View.GONE);
-                    ivCheckedBadge.setVisibility(View.VISIBLE);
-                    etDeckTitle.setEnabled(true);
-
-                    presentCardState();
-
-                    // Initialize clean checkmark saving listener closure routine
-                    ivCheckedBadge.setOnClickListener(vBadge -> {
-                        saveCurrentCardStateIfEditing();
-                        isEditWorkspaceActive = false;
-                        ivCheckedBadge.setVisibility(View.GONE);
-                        btnEditMode.setVisibility(View.VISIBLE);
-                        etDeckTitle.setEnabled(false);
-                        initiateStudySession(currentSelectedDeckName);
-                    });
-                } else {
-                    // Standard navigation behavior: jump forward 1 element frame index
-                    saveCurrentCardStateIfEditing();
-                    cardIndex = (cardIndex + 1) % currentSessionCards.size();
-                    presentCardState();
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    lastKnownSearchQuery = newText.trim();
+                    loadDecks();
+                    return true;
                 }
-            }
-        });
+            });
+        }
 
-        btnEditMode.setOnClickListener(view -> toggleFigmaWorkspaceMode());
-
-        loadDecks();
         return v;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadDecks();
+    }
+
     private void loadDecks() {
-        int originalSize = deckList.size();
         deckList.clear();
-        deckList.addAll(db.appDao().getUniqueDecks());
-        // Clean granular list updates to resolve performance warnings
-        adapter.notifyItemRangeChanged(0, Math.max(originalSize, deckList.size()));
-    }
+        int activeUserId = prefs.getInt("userId", 1);
 
-    private void initiateStudySession(String deckName) {
-        currentSelectedDeckName = deckName;
-        currentSessionCards.clear();
-        currentSessionCards.addAll(db.appDao().getCardsFromDeck(deckName));
-        if (currentSessionCards.isEmpty()) return;
-
-        cardIndex = 0;
-        viewDecks.setVisibility(View.GONE);
-        viewStudy.setVisibility(View.VISIBLE);
-
-        isEditWorkspaceActive = false;
-        btnEditMode.setVisibility(View.VISIBLE);
-        ivCheckedBadge.setVisibility(View.GONE);
-        etDeckTitle.setEnabled(false);
-
-        presentCardState();
-    }
-
-    private void presentCardState() {
-        showingQuestion = true;
-        FlashcardItem item = currentSessionCards.get(cardIndex);
-        etDeckTitle.setText(item.deckName.toUpperCase());
-
-        // Dynamic color filter + view layer opacity configuration updates
-        if (cardIndex == 0) {
-            btnPrev.setEnabled(false);
-            btnPrev.setAlpha(0.25f); // Fade view out
-            btnPrev.setColorFilter(android.graphics.Color.parseColor("#B0B0B0")); // Neutral Gray tint
+        List<TaskItem> allItems;
+        if (lastKnownSearchQuery.isEmpty()) {
+            allItems = db.appDao().getAllTasks(activeUserId);
         } else {
-            btnPrev.setEnabled(true);
-            btnPrev.setAlpha(1.0f); // Reset full visibility
-            btnPrev.setColorFilter(android.graphics.Color.parseColor("#7D5A44")); // Theme Earth Brown tint
+            allItems = db.appDao().searchTasksByQuery(activeUserId, lastKnownSearchQuery);
         }
 
-        // DYNAMIC ICON FLIP: Fixed duplicate expressions and cleaned paths down to standard Android system refs
-        if (cardIndex == currentSessionCards.size() - 1) {
-            btnNext.setImageResource(android.R.drawable.ic_input_add); // '+' sign
-            btnNext.setColorFilter(android.graphics.Color.parseColor("#81B29A")); // Mint Green
-        } else {
-            btnNext.setImageResource(android.R.drawable.ic_media_next); // Arrow ➔
-            btnNext.setColorFilter(android.graphics.Color.parseColor("#7D5A44")); // Earth Brown
+        for (TaskItem item : allItems) {
+            if (item.title != null && item.title.startsWith("DECK_NOTE:")) {
+                deckList.add(item);
+            }
         }
 
-        if (isEditWorkspaceActive) {
-            tvCardStaticText.setVisibility(View.GONE);
-            layoutEditFields.setVisibility(View.VISIBLE);
-
-            // Wipe standard placeholder tracking strings so user views neat clean inputs
-            etQuestionInput.setText(item.question.equals("QUESTION") ? "" : item.question);
-            etAnswerInput.setText(item.answer.equals("ANSWER") ? "" : item.answer);
-            etQuestionInput.requestFocus();
-        } else {
-            layoutEditFields.setVisibility(View.GONE);
-            tvCardStaticText.setVisibility(View.VISIBLE);
-            tvCardStaticText.setText(item.question);
-            tvCardStaticText.setTextColor(android.graphics.Color.parseColor("#3D405B"));
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
         }
     }
 
-    private void toggleFigmaWorkspaceMode() {
-        if (!isEditWorkspaceActive) {
-            isEditWorkspaceActive = true;
-            btnEditMode.setVisibility(View.GONE);
-            ivCheckedBadge.setVisibility(View.VISIBLE);
-            etDeckTitle.setEnabled(true);
+    private void displayCreationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Create New Flashcard Deck");
 
-            ivCheckedBadge.setOnClickListener(v -> {
-                saveCurrentCardStateIfEditing();
-                isEditWorkspaceActive = false;
-                ivCheckedBadge.setVisibility(View.GONE);
-                btnEditMode.setVisibility(View.VISIBLE);
-                etDeckTitle.setEnabled(false);
-                initiateStudySession(currentSelectedDeckName);
-            });
-            presentCardState();
-        }
-    }
+        final EditText inputField = new EditText(requireContext());
+        inputField.setHint("Enter deck title...");
+        builder.setView(inputField);
 
-    private void saveCurrentCardStateIfEditing() {
-        if (isEditWorkspaceActive && !currentSessionCards.isEmpty()) {
-            FlashcardItem card = currentSessionCards.get(cardIndex);
-
-            String qInput = etQuestionInput.getText().toString().trim();
-            String aInput = etAnswerInput.getText().toString().trim();
-            String updatedDeckTitleName = etDeckTitle.getText().toString().trim();
-
-            if (!updatedDeckTitleName.isEmpty()) {
-                card.deckName = updatedDeckTitleName;
-                currentSelectedDeckName = updatedDeckTitleName;
+        builder.setPositiveButton("Create", (dialog, which) -> {
+            String deckName = inputField.getText().toString().trim();
+            if (deckName.isEmpty()) {
+                Toast.makeText(getContext(), "Deck name cannot be empty!", Toast.LENGTH_SHORT).show();
+                return;
             }
 
-            card.question = qInput.isEmpty() ? "QUESTION" : qInput;
-            card.answer = aInput.isEmpty() ? "ANSWER" : aInput;
+            int activeUserId = prefs.getInt("userId", 1);
 
-            // Clear baseline collision vectors
-            db.appDao().deleteCard(card);
-            db.appDao().insertCard(card);
-        }
-    }
+            TaskItem newDeck = new TaskItem();
+            newDeck.title = "DECK_NOTE: " + deckName;
+            newDeck.userId = activeUserId;
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            newDeck.dateCreated = sdf.format(new Date());
+            newDeck.completed = false;
+            newDeck.isRoutine = false;
 
-    private void createNewBlankFigmaDeck() {
-        FlashcardItem templateItem = new FlashcardItem();
-        templateItem.deckName = "Blank";
-        templateItem.question = "QUESTION";
-        templateItem.answer = "ANSWER";
-        db.appDao().insertCard(templateItem);
-        loadDecks();
-    }
-
-    private void closeStudySession() {
-        saveCurrentCardStateIfEditing();
-        viewStudy.setVisibility(View.GONE);
-        viewDecks.setVisibility(View.VISIBLE);
-        loadDecks();
+            db.appDao().insertTask(newDeck);
+            loadDecks();
+            Toast.makeText(getContext(), "Deck created successfully!", Toast.LENGTH_SHORT).show();
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 
     private class DeckAdapter extends RecyclerView.Adapter<DeckAdapter.DeckViewHolder> {
-        @NonNull @Override
+        @NonNull
+        @Override
         public DeckViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_deck_row, parent, false);
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_task_row, parent, false);
             return new DeckViewHolder(v);
         }
+
         @Override
         public void onBindViewHolder(@NonNull DeckViewHolder holder, int pos) {
-            String current = deckList.get(pos);
-            holder.tvName.setText(current.toUpperCase());
-            holder.itemView.setOnClickListener(v -> initiateStudySession(current));
+            TaskItem currentDeck = deckList.get(pos);
+            if (currentDeck.title != null) {
+                String cleanName = currentDeck.title.replace("DECK_NOTE:", "").trim();
+                holder.tvTitle.setText(cleanName);
+            }
+            holder.tvDate.setText(currentDeck.dateCreated);
 
-            holder.tvMinus.setOnClickListener(v -> {
-                int position = holder.getBindingAdapterPosition();
-                if (position != RecyclerView.NO_POSITION) {
-                    List<FlashcardItem> cardsToDelete = db.appDao().getCardsFromDeck(current);
-                    for (FlashcardItem item : cardsToDelete) {
-                        db.appDao().deleteCard(item);
-                    }
-                    deckList.remove(position);
-                    notifyItemRemoved(position);
-                }
+            holder.textLayoutContainer.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), FlashcardStudyActivity.class);
+                intent.putExtra("DECK_ID", currentDeck.taskId);
+                startActivity(intent);
             });
+
+            if (holder.deleteClickBox != null) {
+                holder.deleteClickBox.setOnClickListener(v ->
+                        new AlertDialog.Builder(requireContext())
+                                .setTitle("Delete Flashcard Deck")
+                                .setMessage("Are you sure you want to delete this deck?")
+                                .setPositiveButton("Delete", (dialog, which) -> {
+                                    db.appDao().deleteTask(currentDeck);
+                                    loadDecks();
+                                    Toast.makeText(getContext(), "Deck deleted", Toast.LENGTH_SHORT).show();
+                                })
+                                .setNegativeButton("Cancel", null)
+                                .show()
+                );
+            }
         }
-        @Override public int getItemCount() { return deckList.size(); }
+
+        @Override
+        public int getItemCount() { return deckList.size(); }
 
         class DeckViewHolder extends RecyclerView.ViewHolder {
-            TextView tvName, tvMinus;
+            TextView tvTitle, tvDate;
+            View deleteClickBox;
+            View textLayoutContainer;
+
             public DeckViewHolder(@NonNull View itemView) {
                 super(itemView);
-                tvName = itemView.findViewById(R.id.tvDeckNameDisplay);
-                tvMinus = itemView.findViewById(R.id.tvFigmaMinus);
+                tvTitle = itemView.findViewById(R.id.tvTaskRowTitle);
+                tvDate = itemView.findViewById(R.id.tvTaskRowDate);
+                deleteClickBox = itemView.findViewById(R.id.flDeleteContainer);
+                textLayoutContainer = itemView.findViewById(R.id.llTextContainer);
+
+                View progressMeter = itemView.findViewById(R.id.pbRowTaskMeter);
+                if (progressMeter != null) progressMeter.setVisibility(View.GONE);
+
+                View progressText = itemView.findViewById(R.id.tvRowTaskPercentage);
+                if (progressText != null) progressText.setVisibility(View.GONE);
+
+                // FIXED: Changed fields to exact ConstraintLayout structural names to fix the syntax error
+                if (textLayoutContainer != null && textLayoutContainer.getLayoutParams() instanceof androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) {
+                    androidx.constraintlayout.widget.ConstraintLayout.LayoutParams params =
+                            (androidx.constraintlayout.widget.ConstraintLayout.LayoutParams) textLayoutContainer.getLayoutParams();
+
+                    params.bottomToTop = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.UNSET;
+                    params.bottomToBottom = androidx.constraintlayout.widget.ConstraintLayout.LayoutParams.PARENT_ID;
+                    textLayoutContainer.setLayoutParams(params);
+                }
             }
         }
     }

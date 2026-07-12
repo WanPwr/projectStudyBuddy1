@@ -55,7 +55,6 @@ public class FlashcardStudyActivity extends AppCompatActivity {
         llEditorPanel = findViewById(R.id.llEditorWorkspacePanel);
         btnToggleEdit = findViewById(R.id.btnEditFlashcard);
 
-        // Initializing navigation pointers
         btnPrev = findViewById(R.id.btnPreviousCard);
         btnNext = findViewById(R.id.btnNextCard);
 
@@ -63,7 +62,6 @@ public class FlashcardStudyActivity extends AppCompatActivity {
         FloatingActionButton fabAddCard = findViewById(R.id.fabAddNewFlashcard);
         cvSurface = findViewById(R.id.cvFlashcardSurface);
 
-        // Fetch primary deck parameters directly from Room DB data tables
         runningParentDeckTask = db.appDao().getTaskById(targetDeckId);
         if (runningParentDeckTask != null && runningParentDeckTask.title != null) {
             String cleanTitle = runningParentDeckTask.title.replace("DECK_NOTE:", "").trim();
@@ -94,7 +92,7 @@ public class FlashcardStudyActivity extends AppCompatActivity {
             FlashcardItem placeholder = new FlashcardItem();
             placeholder.parentDeckId = targetDeckId;
             placeholder.question = "Welcome to your new Deck!";
-            placeholder.answer = "Tap Edit above to add card content.";
+            placeholder.answer = "Tap the edit icon above to edit card content.";
             db.appDao().insertCard(placeholder);
             currentDeckCards.addAll(db.appDao().getCardsForDeck(targetDeckId));
         }
@@ -113,58 +111,63 @@ public class FlashcardStudyActivity extends AppCompatActivity {
         tvBadgeIndex.setText(String.valueOf(activeCardIndex + 1));
         showingAnswerState = false;
 
-        cvSurface.setCardBackgroundColor(android.graphics.Color.WHITE);
+        cvSurface.setCardBackgroundColor(Color.WHITE);
+
+        // FIXED: Force-breaks the asset cache lock so the view engine must redraw it
+        btnToggleEdit.setImageDrawable(null);
 
         if (activeEditorMode) {
+            // --- EDIT MODE ACTIVE ---
             tvDisplayContent.setVisibility(View.GONE);
             llEditorPanel.setVisibility(View.VISIBLE);
 
-            // Swap display states for title fields in toolbar layer
             tvHeaderTitle.setVisibility(View.GONE);
             etDeckTitleEdit.setVisibility(View.VISIBLE);
 
             etInputQuestion.setText(activeItem.question);
             etInputAnswer.setText(activeItem.answer);
+
+            // Render floppy disk icon to represent save action availability
+            btnToggleEdit.setImageResource(android.R.drawable.ic_menu_save);
         } else {
+            // --- READ/STUDY MODE ACTIVE ---
             llEditorPanel.setVisibility(View.GONE);
             tvDisplayContent.setVisibility(View.VISIBLE);
 
-            // Revert workspace back to primary reading mode settings
             etDeckTitleEdit.setVisibility(View.GONE);
             tvHeaderTitle.setVisibility(View.VISIBLE);
 
             tvDisplayContent.setText(activeItem.question);
+
+            // FIXED: Explicitly force the system pencil asset to draw on the toolbar layout frame
+            btnToggleEdit.setImageResource(android.R.drawable.ic_menu_edit);
         }
 
-        // Trigger dynamic gray-out verification state whenever a card is bound
         updateNavigationArrowStates();
     }
 
-    // FIXED: Added dynamic boundary evaluation to control button activation and alpha opacity
     private void updateNavigationArrowStates() {
         if (btnPrev == null || btnNext == null) return;
 
         int totalCardsCount = currentDeckCards.size();
 
-        // 1. EVALUATE PREVIOUS (LEFT) ARROW
         if (activeCardIndex <= 0 || totalCardsCount == 0 || activeEditorMode) {
             btnPrev.setEnabled(false);
-            btnPrev.setAlpha(0.3f); // 30% Opacity grayed-out look
+            btnPrev.setAlpha(0.3f);
             btnPrev.setImageTintList(ColorStateList.valueOf(Color.GRAY));
         } else {
             btnPrev.setEnabled(true);
-            btnPrev.setAlpha(1.0f); // Fully solid active look
+            btnPrev.setAlpha(1.0f);
             btnPrev.setImageTintList(ColorStateList.valueOf(Color.parseColor("#81B29A")));
         }
 
-        // 2. EVALUATE NEXT (RIGHT) ARROW
         if (activeCardIndex >= totalCardsCount - 1 || totalCardsCount == 0 || activeEditorMode) {
             btnNext.setEnabled(false);
-            btnNext.setAlpha(0.3f); // 30% Opacity grayed-out look
+            btnNext.setAlpha(0.3f);
             btnNext.setImageTintList(ColorStateList.valueOf(Color.GRAY));
         } else {
             btnNext.setEnabled(true);
-            btnNext.setAlpha(1.0f); // Fully solid active look
+            btnNext.setAlpha(1.0f);
             btnNext.setImageTintList(ColorStateList.valueOf(Color.parseColor("#81B29A")));
         }
     }
@@ -177,10 +180,10 @@ public class FlashcardStudyActivity extends AppCompatActivity {
 
         if (showingAnswerState) {
             tvDisplayContent.setText(activeItem.answer);
-            cvSurface.setCardBackgroundColor(android.graphics.Color.parseColor("#FFFDF6"));
+            cvSurface.setCardBackgroundColor(Color.parseColor("#FFFDF6"));
         } else {
             tvDisplayContent.setText(activeItem.question);
-            cvSurface.setCardBackgroundColor(android.graphics.Color.WHITE);
+            cvSurface.setCardBackgroundColor(Color.WHITE);
         }
     }
 
@@ -199,26 +202,29 @@ public class FlashcardStudyActivity extends AppCompatActivity {
                 return;
             }
 
-            // Save individual Flashcard text entries
+            // Save elements into database architecture
             currentCard.question = qInput;
             currentCard.answer = aInput;
             db.appDao().insertCard(currentCard);
 
-            // Save parent Deck structural title modifications
             if (runningParentDeckTask != null) {
                 runningParentDeckTask.title = "DECK_NOTE: " + updatedDeckTitle;
                 db.appDao().updateTask(runningParentDeckTask);
                 tvHeaderTitle.setText(updatedDeckTitle);
             }
 
-            btnToggleEdit.setImageResource(android.R.drawable.ic_menu_edit);
+            // Flip tracking flag off safely
             activeEditorMode = false;
+
+            // FIXED: Immediately call state render pass to lock graphic changes down
+            renderActiveCardState();
+
             Toast.makeText(this, "Changes Saved!", Toast.LENGTH_SHORT).show();
         } else {
-            btnToggleEdit.setImageResource(android.R.drawable.checkbox_on_background);
             activeEditorMode = true;
+            // FIXED: Force layout redraw instantly upon stepping into edit mode configuration
+            renderActiveCardState();
         }
-        renderActiveCardState();
     }
 
     private void navigateDeckSequence(int stepDirection) {
@@ -252,14 +258,12 @@ public class FlashcardStudyActivity extends AppCompatActivity {
 
         activeCardIndex = currentDeckCards.size() - 1;
         activeEditorMode = true;
-        btnToggleEdit.setImageResource(android.R.drawable.checkbox_on_background);
         renderActiveCardState();
     }
 
     private void triggerCardDeletionConfirmation() {
         if (currentDeckCards.isEmpty()) return;
 
-        // INTERCEPT TRIGGER: Guard rail rule to prevent zero-card deck states
         if (currentDeckCards.size() == 1) {
             new AlertDialog.Builder(this)
                     .setTitle("Cannot Delete Card")
